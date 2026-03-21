@@ -876,7 +876,7 @@ function closeApiKeyModal(){
 }
 function apiHeaders(){
   const key=getApiKey();
-  const h={'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'};
+  const h={'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
   if(key)h['x-api-key']=key;
   return h;
 }
@@ -934,13 +934,19 @@ async function send(){
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
     const data=await res.json();hideTyping();
-    if(data.content?.[0]?.text){
+    if(!res.ok){
+      const errText=data.error?.message||'API error '+res.status;
+      if(res.status===401){document.getElementById('errMsg').textContent='Invalid API key. Tap ☰ → 🔑 to update.';promptApiKey();}
+      else if(res.status===429)document.getElementById('errMsg').textContent='Rate limited — wait a moment and try again.';
+      else document.getElementById('errMsg').textContent=errText;
+      document.getElementById('errMsg').classList.add('show');chatHistory.pop();
+    }else if(data.content?.[0]?.text){
       let r=data.content[0].text;
       const macroMatch=r.match(/\{"action":"update_macros"[^}]+\}/);
       if(macroMatch){try{const cmd=JSON.parse(macroMatch[0]);if(cmd.protein&&cmd.carbs&&cmd.fats){S.macroTargets={protein:parseInt(cmd.protein),carbs:parseInt(cmd.carbs),fats:parseInt(cmd.fats)};MACRO_TARGETS.protein=parseInt(cmd.protein);MACRO_TARGETS.carbs=parseInt(cmd.carbs);MACRO_TARGETS.fats=parseInt(cmd.fats);saveState();renderMacros();r=r.replace(macroMatch[0],'').trim();setTimeout(()=>showAchToast('🎯','MACROS UPDATED','P:'+cmd.protein+'g C:'+cmd.carbs+'g F:'+cmd.fats+'g'),600);}}catch(e){}}
       chatHistory.push({role:'assistant',content:r});addMsg('ai',r);}
     else throw new Error();
-  }catch{hideTyping();document.getElementById('errMsg').classList.add('show');chatHistory.pop();}
+  }catch(err){hideTyping();document.getElementById('errMsg').textContent='Connection error — check your internet and try again.';document.getElementById('errMsg').classList.add('show');chatHistory.pop();}
   loading=false;document.getElementById('sendBtn').disabled=false;input.focus();
 }
 
