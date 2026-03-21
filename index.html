@@ -646,44 +646,43 @@ const WORKOUT_TYPES = [
 ];
 
 const ACHIEVEMENTS = [
-  // FIRST STEPS
-  {id:'first',    icon:'🎮', name:'PRESS START',       desc:'Log your first session',       check:s=>s.total>=1},
-  {id:'week',     icon:'📅', name:'NO OFF DAYS',       desc:'7 sessions logged',            check:s=>s.total>=7},
-  {id:'month',    icon:'💀', name:'THE GRIND',         desc:'30 sessions logged',           check:s=>s.total>=30},
-  {id:'mullet',   icon:'🤘', name:'THE MULLET GOD',    desc:'50 sessions logged',           check:s=>s.total>=50},
-  {id:'hundo',    icon:'☢️', name:'WEAPONS GRADE',     desc:'100 sessions logged',          check:s=>s.total>=100},
-  // SPLITS
-  {id:'push10',   icon:'💪', name:'CHEST BLASTER',     desc:'10 push days',                 check:s=>(s.byType.push||0)>=10},
-  {id:'pull10',   icon:'🔗', name:'BARN DOOR BACK',    desc:'10 pull days',                 check:s=>(s.byType.pull||0)>=10},
-  {id:'legs5',    icon:'🦵', name:'WHEELS',            desc:'5 leg days',                   check:s=>(s.byType.legs||0)>=5},
-  {id:'cardio10', icon:'🫁', name:'CARDIO KILLS',      desc:'10 cardio sessions',           check:s=>(s.byType.cardio||0)>=10},
-  {id:'yoga5',    icon:'💎', name:'BANG!',              desc:'5 DDP Yoga sessions',          check:s=>(s.byType.yoga||0)>=5},
-  {id:'nak_muay', icon:'🥊', name:'NAK MUAY',          desc:'10 Muay Thai sessions',        check:s=>(s.byType.muaythai||0)>=10},
-  {id:'spectrum', icon:'🌀', name:'FULL ROSTER',       desc:'Try all 7 workout types',      check:s=>Object.keys(s.byType).length>=7},
-  // STREAKS
-  {id:'streak3',  icon:'🔥', name:'3 COUNT',           desc:'3-day streak',                 check:s=>s.streak>=3},
-  {id:'streak5',  icon:'🔥', name:'FIVE MOVES',        desc:'5-day streak',                 check:s=>s.streak>=5},
-  {id:'streak7',  icon:'⚡', name:'UNBREAKABLE',       desc:'7-day streak',                 check:s=>s.streak>=7},
-  {id:'streak14', icon:'👊', name:'KEPT GOING',        desc:'14-day streak',                check:s=>s.streak>=14},
-  // XP
-  {id:'xp1000',   icon:'💯', name:'OVER 9000',         desc:'1,000 XP earned',              check:s=>s.totalXP>=1000},
-  {id:'xp5000',   icon:'🏆', name:'BOSS FIGHT WON',   desc:'5,000 XP earned',              check:s=>s.totalXP>=5000},
-  {id:'xp9000',   icon:'📡', name:'MAX LEVEL',         desc:'9,000 XP earned',              check:s=>s.totalXP>=9000},
-  // LEVELS
-  {id:'lv5',      icon:'⭐', name:'MIDCARD',           desc:'Reach level 5',                check:s=>s.level>=5},
-  {id:'lv10',     icon:'🏛', name:'MAIN EVENT',        desc:'Reach level 10',               check:s=>s.level>=10},
-  {id:'lv20',     icon:'👑', name:'UNDISPUTED',        desc:'Reach level 20',               check:s=>s.level>=20},
-  // PRs
-  {id:'pr1',      icon:'🏅', name:'NEW HIGH SCORE',    desc:'Log your first PR',            check:s=>Object.keys(s.prs||{}).length>=1},
-  {id:'pr5',      icon:'📊', name:'THE RECORD BOOK',   desc:'5 different PR lifts',         check:s=>Object.keys(s.prs||{}).length>=5},
-  // NUTRITION & BODY
-  {id:'macro1',   icon:'🥩', name:'EAT BIG',           desc:'Log food for the first time',  check:s=>{const t=new Date().toLocaleDateString('en-US');return s.nutrition&&s.nutrition[t]&&s.nutrition[t].foods&&s.nutrition[t].foods.length>=1;}},
-  {id:'checkin1', icon:'📋', name:'WEIGH IN',          desc:'Complete a check-in',          check:s=>s.lastCheckin!==null},
-  // EARNED
-  {id:'pumping',  icon:'🏋', name:'PUMPING IRON',      desc:'20 combined push + pull days', check:s=>((s.byType.push||0)+(s.byType.pull||0))>=20},
-  {id:'triple',   icon:'🩸', name:'TRIPLE THREAT',     desc:'Earn 3 trophies',              check:s=>s.unlocked.length>=3},
-  {id:'ten',      icon:'🐍', name:'SNAKE EATER',       desc:'Earn 10 trophies',             check:s=>s.unlocked.length>=10},
-  {id:'twenty',   icon:'🌟', name:'HALL OF FAME',      desc:'Earn 20 trophies',             check:s=>s.unlocked.length>=20},
+  // SHOW UP
+  {id:'first',    icon:'🩸', name:'FIRST BLOOD',       desc:'Log your first session',       check:s=>s.total>=1},
+  {id:'week',     icon:'🔥', name:'DIFFERENT BREED',    desc:'7 sessions logged',            check:s=>s.total>=7},
+  {id:'month',    icon:'💀', name:'OBSESSED',           desc:'30 sessions logged',           check:s=>s.total>=30},
+  {id:'mullet',   icon:'🤘', name:'THE MULLET GOD',     desc:'50 sessions logged',           check:s=>s.total>=50},
+  {id:'hundo',    icon:'☠️', name:'NO DAYS OFF',        desc:'100 sessions logged',          check:s=>s.total>=100},
+  // PUT IN WORK
+  {id:'push10',   icon:'💪', name:'ALL CHEST',          desc:'10 push days',                 check:s=>(s.byType.push||0)>=10},
+  {id:'pull10',   icon:'🦍', name:'GORILLA BACK',       desc:'10 pull days',                 check:s=>(s.byType.pull||0)>=10},
+  {id:'legs5',    icon:'🌳', name:'TREE TRUNKS',        desc:'5 leg days',                   check:s=>(s.byType.legs||0)>=5},
+  {id:'cardio10', icon:'🫁', name:'SUFFER',          desc:'10 cardio sessions',           check:s=>(s.byType.cardio||0)>=10},
+  {id:'yoga5',    icon:'💎', name:'BANG!',               desc:'5 DDP Yoga sessions',          check:s=>(s.byType.yoga||0)>=5},
+  {id:'nak_muay', icon:'🥊', name:'NAK MUAY',           desc:'10 Muay Thai sessions',        check:s=>(s.byType.muaythai||0)>=10},
+  {id:'spectrum', icon:'🌀', name:'WELL ROUNDED',       desc:'Try all 7 workout types',      check:s=>Object.keys(s.byType).length>=7},
+  // DON'T STOP
+  {id:'streak3',  icon:'🔥', name:'BUILDING',           desc:'3-day streak',                 check:s=>s.streak>=3},
+  {id:'streak5',  icon:'🔥', name:'LOCKED IN',          desc:'5-day streak',                 check:s=>s.streak>=5},
+  {id:'streak7',  icon:'⚡', name:'A PROBLEM',          desc:'7-day streak',                 check:s=>s.streak>=7},
+  {id:'streak14', icon:'👹', name:'POSSESSED',          desc:'14-day streak',                check:s=>s.streak>=14},
+  // GROW
+  {id:'xp1000',   icon:'📈', name:'CLIMBING',           desc:'1,000 XP earned',              check:s=>s.totalXP>=1000},
+  {id:'xp5000',   icon:'🏆', name:'THAT GUY',           desc:'5,000 XP earned',              check:s=>s.totalXP>=5000},
+  {id:'xp9000',   icon:'💥', name:'OVER 9000',          desc:'9,000 XP earned',              check:s=>s.totalXP>=9000},
+  {id:'lv5',      icon:'⚡', name:'ARRIVED',            desc:'Reach level 5',                check:s=>s.level>=5},
+  {id:'lv10',     icon:'🏛', name:'MAIN EVENT',         desc:'Reach level 10',               check:s=>s.level>=10},
+  {id:'lv20',     icon:'👑', name:'UNDISPUTED',          desc:'Reach level 20',               check:s=>s.level>=20},
+  // PROVE IT
+  {id:'pr1',      icon:'🏅', name:'RECEIPTS',           desc:'Log your first PR',            check:s=>Object.keys(s.prs||{}).length>=1},
+  {id:'pr5',      icon:'📊', name:'STACKING PLATES',    desc:'5 different PR lifts',         check:s=>Object.keys(s.prs||{}).length>=5},
+  // FEED THE MACHINE
+  {id:'macro1',   icon:'🥩', name:'FED',                desc:'Log food for the first time',  check:s=>{const t=new Date().toLocaleDateString('en-US');return s.nutrition&&s.nutrition[t]&&s.nutrition[t].foods&&s.nutrition[t].foods.length>=1;}},
+  {id:'checkin1', icon:'📋', name:'ACCOUNTABLE',        desc:'Complete a check-in',          check:s=>s.lastCheckin!==null},
+  // LEGACY
+  {id:'pumping',  icon:'🏋', name:'VOLUME DEALER',      desc:'20 combined push + pull days', check:s=>((s.byType.push||0)+(s.byType.pull||0))>=20},
+  {id:'triple',   icon:'🐍', name:'SNAKE EATER',        desc:'Earn 3 trophies',              check:s=>s.unlocked.length>=3},
+  {id:'ten',      icon:'🎖', name:'DECORATED',          desc:'Earn 10 trophies',             check:s=>s.unlocked.length>=10},
+  {id:'twenty',   icon:'🌟', name:'HALL OF FAME',        desc:'Earn 20 trophies',             check:s=>s.unlocked.length>=20},
 ];
 
 // ══════════════════════════
