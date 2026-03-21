@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#080808">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Big Lifts Training</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -211,23 +211,32 @@ textarea::placeholder{color:var(--muted2);}
 /* ══ MOBILE ══ */
 .mobile-nav{display:none;}.mobile-panel{display:none;}
 @media(max-width:768px){
-  html,body{overflow:hidden;}
-  .sidebar{display:none;}.app{flex-direction:column;height:100vh;height:100dvh;}
+  html,body{overflow:hidden;position:fixed;width:100%;height:100%;}
+  .sidebar{display:none;}
+  .app{flex-direction:column;height:100vh;height:100dvh;height:-webkit-fill-available;position:relative;}
   .main{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
   .hamburger{display:flex;}
-  .topbar{padding:8px 10px;overflow-x:auto;gap:6px;}.mode-tabs{gap:3px;flex:1;overflow-x:auto;}.mode-tab{padding:5px 8px;font-size:10px;letter-spacing:1px;white-space:nowrap;}.streak-pill{display:none;}
+  .topbar{padding:8px 10px;padding-top:calc(8px + env(safe-area-inset-top));overflow-x:auto;gap:6px;}
+  .mode-tabs{gap:3px;flex:1;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .mode-tabs::-webkit-scrollbar{display:none;}
+  .mode-tab{padding:5px 8px;font-size:10px;letter-spacing:1px;white-space:nowrap;}.streak-pill{display:none;}
   .chips-bar{padding:7px 10px;gap:5px;}.chip{padding:5px 10px;font-size:11px;}
-  .chat{padding:10px 12px;gap:10px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}.bubble{font-size:13px;padding:10px 12px;}.input-zone{padding:8px 10px 10px;}.input-hint{display:none;}
-  .mobile-nav{display:flex;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;z-index:100;}
-  .mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 9px;background:transparent;border:none;color:var(--muted2);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.5px;cursor:pointer;transition:color 0.15s;gap:3px;}
+  .chat{padding:10px 12px;gap:10px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .bubble{font-size:13px;padding:10px 12px;}
+  .input-zone{padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--s1);}.input-hint{display:none;}
+  .mobile-nav{display:flex;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+  .mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 6px;background:transparent;border:none;color:var(--muted2);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.5px;cursor:pointer;transition:color 0.15s;gap:3px;}
   .mobile-nav-btn.active{color:var(--fire2);}
   .mobile-nav-btn .nav-icon{font-size:19px;line-height:1;}
-  .mobile-panel{position:fixed;inset:0;bottom:57px;background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
+  .mobile-panel{position:fixed;top:0;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom));background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
   .mobile-panel.active{display:flex;}
-  .mobile-panel-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+  .mobile-panel-header{padding:14px 18px 10px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .modal{width:95vw;padding:16px;}.wtype-grid{grid-template-columns:repeat(3,1fr);}
   .lu-box{padding:22px 18px;}.lu-level{font-size:60px;}.lu-title{font-size:30px;}
+  .more-menu{bottom:calc(57px + env(safe-area-inset-bottom));}
+  .drawer{padding-top:env(safe-area-inset-top);}
+  .ach-toast{bottom:calc(70px + env(safe-area-inset-bottom));right:12px;left:12px;min-width:auto;}
 }
 @media(min-width:769px){.mobile-nav{display:none!important;}.mobile-panel{display:none!important;}.drawer{display:none!important;}.drawer-overlay{display:none!important;}.hamburger{display:none!important;}}
 /* ══ MORE MENU ══ */
@@ -843,7 +852,7 @@ function addMsg(role,content){
   const av=document.createElement('div');av.className=`msg-av ${role==='user'?'user':'ai'}`;av.textContent=role==='user'?'BU':'BL';
   const b=document.createElement('div');b.className=`bubble ${role==='user'?'user':'ai'}`;
   b.innerHTML=role==='user'?`<p>${esc(content)}</p>`:fmtAI(content);
-  w.appendChild(av);w.appendChild(b);chat.appendChild(w);chat.scrollTop=chat.scrollHeight;
+  w.appendChild(av);w.appendChild(b);chat.appendChild(w);requestAnimationFrame(()=>chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'}));
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmtAI(text){
@@ -852,7 +861,7 @@ function fmtAI(text){
   for(let l of lines){if(l.startsWith('__LI__')){if(!ul){html+='<ul>';ul=true;}html+=`<li>${l.replace('__LI__','')}</li>`;}else{if(ul){html+='</ul>';ul=false;}if(l.startsWith('<h3>'))html+=l;else if(l.trim())html+=`<p>${l}</p>`;}}
   if(ul)html+='</ul>';return html||`<p>${text}</p>`;
 }
-function showTyping(){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='typing-wrap';d.id='typing';d.innerHTML=`<div class="msg-av ai">BL</div><div class="typing-bub"><span></span><span></span><span></span></div>`;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function showTyping(){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='typing-wrap';d.id='typing';d.innerHTML=`<div class="msg-av ai">BL</div><div class="typing-bub"><span></span><span></span><span></span></div>`;chat.appendChild(d);requestAnimationFrame(()=>chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'}));}
 function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 function autoResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
@@ -1501,6 +1510,66 @@ function drawerNav(tab){
     else{const nb=el('mNavMore');if(nb)nb.classList.add('active');}
   }
 }
+
+// ══════════════════════════
+//  SWIPE TO CLOSE DRAWER
+// ══════════════════════════
+(function(){
+  let startX=0,currentX=0,dragging=false;
+  const drawer=document.getElementById('drawer');
+  if(!drawer)return;
+  drawer.addEventListener('touchstart',function(e){
+    startX=e.touches[0].clientX;currentX=startX;dragging=true;
+    drawer.style.transition='none';
+  },{passive:true});
+  drawer.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    currentX=e.touches[0].clientX;
+    const dx=currentX-startX;
+    if(dx<0)drawer.style.transform='translateX('+dx+'px)';
+  },{passive:true});
+  drawer.addEventListener('touchend',function(){
+    if(!dragging)return;dragging=false;
+    drawer.style.transition='';
+    const dx=currentX-startX;
+    if(dx<-60){closeDrawer();}
+    else{drawer.style.transform='';}
+  });
+})();
+
+// ══════════════════════════
+//  iOS KEYBOARD FIX
+// ══════════════════════════
+(function(){
+  const input=document.getElementById('input');
+  if(!input)return;
+  let focusTimer=null;
+  input.addEventListener('focus',function(){
+    // Delay to let keyboard fully open
+    focusTimer=setTimeout(()=>{
+      const chat=document.getElementById('chat');
+      if(chat)chat.scrollTop=chat.scrollHeight;
+      // Scroll input into view on iOS
+      if(/iPhone|iPad/.test(navigator.userAgent)){
+        setTimeout(()=>input.scrollIntoView({block:'end',behavior:'smooth'}),300);
+      }
+    },400);
+  });
+  input.addEventListener('blur',function(){
+    if(focusTimer)clearTimeout(focusTimer);
+    // Reset any viewport shifts
+    if(/iPhone|iPad/.test(navigator.userAgent)){
+      window.scrollTo(0,0);
+      document.body.scrollTop=0;
+    }
+  });
+  // Prevent body scroll when keyboard is open
+  document.addEventListener('touchmove',function(e){
+    if(document.activeElement===input&&e.target===document.body){
+      e.preventDefault();
+    }
+  },{passive:false});
+})();
 
 // ══════════════════════════
 //  MOBILE NAV
