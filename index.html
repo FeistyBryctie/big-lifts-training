@@ -231,6 +231,8 @@ textarea::placeholder{color:var(--muted2);}
   .mobile-panel{position:fixed;top:0;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom));background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
   .mobile-panel.active{display:flex;}
   .mobile-panel-header{padding:14px 18px 10px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .panel-back{width:32px;height:32px;border-radius:7px;background:var(--s2);border:1px solid var(--border2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;transition:all 0.15s;}
+  .panel-back:hover{border-color:var(--fire);color:var(--fire2);}
   .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .modal{width:95vw;padding:16px;}.wtype-grid{grid-template-columns:repeat(3,1fr);}
   .lu-box{padding:22px 18px;}.lu-level{font-size:60px;}.lu-title{font-size:30px;}
@@ -258,7 +260,7 @@ textarea::placeholder{color:var(--muted2);}
 /* ══ 1RM ══ */
 .calc-result{background:var(--s2);border-radius:10px;padding:14px;margin-top:12px;display:none;}.calc-result.show{display:block;}.calc-result-main{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:40px;color:var(--amber);line-height:1;}.calc-pct-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;}.calc-pct-item{background:var(--s3);border-radius:6px;padding:6px;text-align:center;}.calc-pct-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;}.calc-pct-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted2);}
 /* ══ WATER ══ */
-.water-wrap{padding:12px 18px;border-bottom:1px solid var(--border);}.water-cups{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}.water-cup{width:33px;height:33px;border-radius:7px;border:2px solid var(--border2);background:var(--s2);cursor:pointer;font-size:16px;transition:all 0.15s;}.water-cup.filled{background:rgba(74,158,255,0.2);border-color:var(--blue);}
+.water-wrap{padding:12px 18px;border-bottom:1px solid var(--border);}.water-cups{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px;}.water-cup{width:28px;height:28px;border-radius:6px;border:2px solid var(--border2);background:var(--s2);cursor:pointer;font-size:13px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}.water-cup.filled{background:rgba(74,158,255,0.2);border-color:var(--blue);}
 /* ══ CHECKIN ══ */
 .rating-btn{flex:1;padding:5px 2px;border-radius:5px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.15s;}.rating-btn.selected{background:var(--fire);border-color:var(--fire);color:white;}
 /* ══ MEASURE ══ */
@@ -604,8 +606,6 @@ function buildBryce(level) {
   return wrap;
 }
 
-function lerp(a, b, t) { return a + (b - a) * Math.max(0, Math.min(1, t)); }
-
 // ══════════════════════════
 //  GAME DATA
 // ══════════════════════════
@@ -620,7 +620,7 @@ const LEVELS = [
   {level:7,  xp:3000,  title:'APEX WARRIOR'},
   {level:8,  xp:4500,  title:'IRON LEGEND'},
   {level:9,  xp:6500,  title:'BIG LIFTS MASTER'},
-  {level:10, xp:3600,  title:'BIG LIFTS CERTIFIED'},
+  {level:10, xp:9000,  title:'BIG LIFTS CERTIFIED'},
   // Levels beyond 10 continue — no cap
 ];
 
@@ -628,7 +628,7 @@ function getLevelData(lvl) {
   if (lvl <= LEVELS.length) return LEVELS[lvl-1];
   // Infinite: title rotates + XP scales exponentially
   const titles = ['POWERHOUSE','MASS MONSTER','FREAK OF NATURE','UNTOUCHABLE','ABSOLUTE UNIT','THE GOAT'];
-  return { level: lvl, xp: Math.round(3600 * Math.pow(1.35, lvl-10)), title: titles[(lvl-11) % titles.length] };
+  return { level: lvl, xp: Math.round(9000 * Math.pow(1.35, lvl-10)), title: titles[(lvl-11) % titles.length] };
 }
 
 const WORKOUT_TYPES = [
@@ -636,8 +636,9 @@ const WORKOUT_TYPES = [
   {id:'pull',   label:'Pull',      xp:30, stat:{str:4,aes:2,rec:1}},
   {id:'legs',   label:'Legs',      xp:35, stat:{str:5,end:2}},
   {id:'full',   label:'Full Body', xp:40, stat:{str:3,end:3,aes:2}},
-  {id:'cardio', label:'Cardio',    xp:20, stat:{end:5}},
+  {id:'cardio', label:'Cardio',    xp:20, stat:{end:5,rec:1}},
   {id:'muaythai', label:'Muay Thai', xp:35, stat:{end:5,aes:2,str:1}},
+  {id:'yoga',   label:'DDP Yoga',  xp:25, stat:{rec:5,end:2,aes:1}},
 ];
 
 const ACHIEVEMENTS = [
@@ -649,7 +650,7 @@ const ACHIEVEMENTS = [
   {id:'cardio10', icon:'🏃', name:'CARDIO DEMON',   desc:'10 cardio sessions',           check:s=>(s.byType.cardio||0)>=10},
   {id:'yoga5',    icon:'🧘', name:'THE YOGI',       desc:'5 DDP Yoga sessions',          check:s=>(s.byType.yoga||0)>=5},
   {id:'streak5',  icon:'🔥', name:'ON FIRE',        desc:'5-day streak',                 check:s=>s.streak>=5},
-  {id:'spectrum', icon:'🌐', name:'FULL SPECTRUM',  desc:'Try all 6 workout types',      check:s=>Object.keys(s.byType).length>=6},
+  {id:'spectrum', icon:'🌐', name:'FULL SPECTRUM',  desc:'Try all 7 workout types',      check:s=>Object.keys(s.byType).length>=7},
   {id:'xp1000',   icon:'💯', name:'CENTURION',      desc:'1,000 XP earned',              check:s=>s.totalXP>=1000},
   {id:'lv5',      icon:'⚡', name:'HALFWAY THERE',  desc:'Reach level 5',                check:s=>s.level>=5},
   {id:'lv10',     icon:'👑', name:'THE BIG ONE', desc:'Reach level 10',               check:s=>s.level>=10},
@@ -826,9 +827,9 @@ function switchTab(tab,btn){
 
 let chatHistory=[],loading=false,currentMode='train';
 const PROMPTS={
-  train:`You are a trainer in the mold of Greg Plitt — intense, driven, charismatic. You're training Bryce Urbantke — 29yo male, Austin TX. PPL split, 215 lb incline PR, aesthetics + strength, optimizing naturally post-TRT. Talk directly to him. Short punchy sentences. Challenge him. Give precise programming with sets × reps, weight targets, rest periods. **Bold** exercises and numbers. End with something that makes him want to train right now.`,
+  train:`You are a trainer in the mold of Greg Plitt — intense, driven, charismatic. You're training Bryce Urbantke — 29yo male, Austin TX. PPL split, aesthetics + strength, optimizing naturally post-TRT. Use his PR data from the live context below for weight targets. Talk directly to him. Short punchy sentences. Challenge him. Give precise programming with sets × reps, weight targets, rest periods. **Bold** exercises and numbers. End with something that makes him want to train right now.`,
   nutrition:`You are a coach in the mold of Greg Plitt — nutrition is a weapon. Coaching Bryce Urbantke — 29yo, PPL split, lean muscle/aesthetics, optimizing testosterone naturally post-TRT. Direct, specific, real numbers. **Bold** key numbers and foods. Practical for a guy who travels for work.`,
-  muaythai:`You are a Muay Thai coach in the mold of Greg Plitt — intense, technical. Coaching Bryce Urbantke — 29yo, Austin TX, trains at an MMA gym.
+  muaythai:`You are a Muay Thai coach channeling Rodtang Jitmuangnon — relentless pressure fighter, iron chin, walks forward and breaks opponents with volume. You're fearless, aggressive, and you live for the war. Coaching Bryce Urbantke — 29yo, Austin TX, trains at an MMA gym. Coach him like Rodtang would — constant pressure, heavy hands, devastating body kicks, knee game. Short punchy sentences. Talk like a fighter, not a professor.
 BAGWORK ROUTINE 1: R1:jab-cross-roundhouse to body | R2:cross-lead hook-roundhouse,check | R3:jab-low kick-cross-switch kick,check | R4:cross-step thru opposite stance-rear knee-elbow | R5:check-roundhouse body-cross-roundhouse body | R6:lean back-head kick-long guard-jab-cross-rear elbow | R7:lead up elbow-rear horizontal elbow-step back-jab-low kick | R8:rear teep-fake teep opposite stance-lead upwards elbow | R9:rear knee-long guard-switch knee-rear elbow | R10:roundhouse-check-roundhouse | R11:lead teep-reset-fake lead teep-upwards elbow-horizontal elbow | R12:rear teep-fake into opposite stance-lead hook changing angle-roundhouse | R13:switch kick-fake switch-lead hook-roundhouse | R14:switch kick-double switch-roundhouse | R15:fake roundhouse hips-lead hook-roundhouse-check
 BAGWORK ROUTINE 2: Flow Rounds 3x3min. Movement, defence, feints, teeps, checks.
 BAGWORK ROUTINE 3: Freestyle 3x3min. Combine all techniques naturally.
@@ -839,7 +840,7 @@ Be direct, technical, reference specific combinations. **Bold** key techniques a
   recovery:`You are a coach in the mold of Greg Plitt — recovery is strategy. Coaching Bryce Urbantke — 29yo, PPL split, optimizing natural testosterone post-TRT. Sleep, mobility, stress management, hormone optimization. Direct and specific. **Bold** key recommendations.`
 };
 const CHIPS={
-  train:[['🗓 PPL Split','Build me a full PPL week for aesthetics and strength.'],['💪 Push Day','Push day. Incline bench PR is 215 lbs.'],['🔙 Pull Day','Pull day: back thickness and bicep peak.'],['🦵 Leg Day','Quad-focused leg day.'],['📈 Break Plateau','Break my incline bench plateau.'],['✈️ Travel','Hotel gym dumbbells only. Push workout.']],
+  train:[['🗓 PPL Split','Build me a full PPL week for aesthetics and strength.'],['💪 Push Day','Push day. Use my PR data for weight targets.'],['🔙 Pull Day','Pull day: back thickness and bicep peak.'],['🦵 Leg Day','Quad-focused leg day.'],['📈 Break Plateau','Help me break through my current plateau.'],['✈️ Travel','Hotel gym dumbbells only. Push workout.']],
   nutrition:[['🥩 Lean Bulk','Practical meals for lean muscle.'],['⏱ Timing','Pre/post workout nutrition.'],['🧪 Nat-T Stack','Supps for natural testosterone post-TRT.'],['📊 Macros','Daily macro targets for aesthetics.']],
   muaythai:[['🥊 Today','Give me a Muay Thai session for today.'],['📋 Weekly Plan','Give me my intermediate weekly Muay Thai plan.'],['💥 Bagwork R1','Walk me through Bagwork Routine 1 — all 15 combinations with coaching cues.'],['🏋️ S&C','Give me the full Muay Thai strength and conditioning workout.'],['🦵 Kick Power','How do I increase power in my roundhouse and teep?']],
   recovery:[['😴 Sleep','Optimize sleep for muscle and testosterone.'],['⚗️ Post-TRT','Maximize natural T after TRT.'],['💆 Deload','Should I deload? How?']]
@@ -871,7 +872,10 @@ async function send(){
   const input=document.getElementById('input');const text=input.value.trim();if(!text)return;
   document.getElementById('errMsg').classList.remove('show');
   input.value='';input.style.height='40px';loading=true;document.getElementById('sendBtn').disabled=true;
-  addMsg('user',text);chatHistory.push({role:'user',content:text});showTyping();
+  addMsg('user',text);chatHistory.push({role:'user',content:text});
+  // Cap chat history to last 20 messages to avoid API token limits
+  if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
+  showTyping();
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
     const data=await res.json();hideTyping();
@@ -1073,6 +1077,23 @@ function removeFood(index){
   n.foods.splice(index,1);
   saveState();renderMacros();
 }
+function toggleManualFood(){
+  const form=el('manualFoodForm');
+  if(form)form.style.display=form.style.display==='none'?'block':'none';
+}
+function saveManualFood(){
+  const name=(el('manualFoodName')&&el('manualFoodName').value.trim())||'Custom Food';
+  const p=parseFloat(el('manualP')&&el('manualP').value)||0;
+  const c=parseFloat(el('manualC')&&el('manualC').value)||0;
+  const f=parseFloat(el('manualF')&&el('manualF').value)||0;
+  if(p===0&&c===0&&f===0)return;
+  addFoodToLog(name,p,c,f);
+  if(el('manualFoodName'))el('manualFoodName').value='';
+  if(el('manualP'))el('manualP').value='';
+  if(el('manualC'))el('manualC').value='';
+  if(el('manualF'))el('manualF').value='';
+  const form=el('manualFoodForm');if(form)form.style.display='none';
+}
 async function searchFood(){
   const inp=el('foodSearchInput');
   const query=inp?inp.value.trim():'';
@@ -1157,14 +1178,14 @@ function renderWater(){
   const cups=el('waterCups');const goal=el('waterGoal');if(!cups)return;
   const today=getWaterToday();const count=S.water[today]||0;
   cups.innerHTML='';
-  for(let i=1;i<=8;i++){
+  for(let i=1;i<=16;i++){
     const btn=document.createElement('button');
     btn.className='water-cup'+(i<=count?' filled':'');
     btn.textContent='💧';
     btn.onclick=()=>{S.water[today]=i<=count?i-1:i;saveState();renderWater();};
     cups.appendChild(btn);
   }
-  if(goal)goal.textContent=count+' / 8 cups';
+  if(goal)goal.textContent=count+' / 16 cups (1 gal)';
 }
 
 // ══════════════════════════
@@ -1363,7 +1384,7 @@ function renderSupps(){
   const supps=getSuppState();list.innerHTML='';
   supps.forEach((s,i)=>{
     const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);';
-    d.innerHTML='<div style="flex:1;font-size:13px;font-weight:500;">'+s.name+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--amber);">'+s.time+'</div><button onclick="toggleSupp('+i+')" style="width:26px;height:26px;border-radius:6px;border:2px solid var(--border2);background:'+(s.checked?'var(--green)':'var(--s2)')+';cursor:pointer;font-size:14px;flex-shrink:0;">'+(s.checked?'v':'')+'</button><button onclick="removeSupp('+i+')" style="background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:13px;">x</button>';
+    d.innerHTML='<div style="flex:1;font-size:13px;font-weight:500;">'+s.name+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--amber);">'+s.time+'</div><button onclick="toggleSupp('+i+')" style="width:26px;height:26px;border-radius:6px;border:2px solid var(--border2);background:'+(s.checked?'var(--green)':'var(--s2)')+';cursor:pointer;font-size:14px;flex-shrink:0;color:white;">'+(s.checked?'✓':'')+'</button><button onclick="removeSupp('+i+')" style="background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:13px;">✕</button>';
     list.appendChild(d);
   });
 }
@@ -1659,6 +1680,19 @@ function renderMobileAch(){
 const __orig=refreshUI;
 refreshUI=function(){__orig();refreshMobileMe&&refreshMobileMe();renderMobileLog&&renderMobileLog();renderWater&&renderWater();renderMacros&&renderMacros();};
 
+// ══════════════════════════
+//  BACK BUTTON FOR PANELS
+// ══════════════════════════
+function backToChat(){
+  ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
+  el('moreMenu')&&el('moreMenu').classList.remove('active');
+  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
+  const chatBtn=el('mNavChat');if(chatBtn)chatBtn.classList.add('active');
+  // Reset drawer active state
+  document.querySelectorAll('.drawer-item').forEach(d=>d.classList.remove('active'));
+  const chatDrawerItem=document.querySelector('.drawer-item');if(chatDrawerItem)chatDrawerItem.classList.add('active');
+}
+
 // INIT
 renderChips();
 refreshUI();
@@ -1751,7 +1785,7 @@ addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level
     <div class="water-wrap">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:8px;">WATER TODAY</div>
       <div class="water-cups" id="waterCups"></div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);" id="waterGoal">0 / 8 cups</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);" id="waterGoal">0 / 16 cups (1 gal)</div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--border);">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;">WEEKLY CHECK-IN</div>
@@ -1822,6 +1856,17 @@ addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level
       <input class="food-search-input" id="foodSearchInput" placeholder="Search food..." onkeydown="if(event.key==='Enter')searchFood()">
       <button class="food-search-btn" onclick="searchFood()">SEARCH</button>
       <button class="food-scan-btn" onclick="openScanner()">📷</button>
+      <button class="food-scan-btn" onclick="toggleManualFood()" id="manualFoodToggle" title="Quick add">✏️</button>
+    </div>
+    <div id="manualFoodForm" style="display:none;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--s2);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;">QUICK ADD</div>
+      <input class="field-input" id="manualFoodName" placeholder="Food name" style="margin-bottom:6px;padding:7px 10px;font-size:12px;">
+      <div style="display:flex;gap:5px;margin-bottom:6px;">
+        <input class="field-input" id="manualP" type="number" placeholder="Protein (g)" style="flex:1;margin-bottom:0;padding:7px 8px;font-size:12px;">
+        <input class="field-input" id="manualC" type="number" placeholder="Carbs (g)" style="flex:1;margin-bottom:0;padding:7px 8px;font-size:12px;">
+        <input class="field-input" id="manualF" type="number" placeholder="Fats (g)" style="flex:1;margin-bottom:0;padding:7px 8px;font-size:12px;">
+      </div>
+      <button onclick="saveManualFood()" style="width:100%;padding:8px;border-radius:7px;background:var(--fire);border:none;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;">ADD TO LOG</button>
     </div>
     <div id="foodResults" class="food-results" style="display:none;"></div>
     <div style="padding:8px 16px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;color:var(--muted2);">TODAY'S LOG</div>
@@ -1965,6 +2010,15 @@ addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level
 
 
 <script>
+// Inject back buttons into all mobile panel headers (must run after panels exist in DOM)
+document.querySelectorAll('.mobile-panel-header').forEach(header=>{
+  const btn=document.createElement('button');
+  btn.className='panel-back';
+  btn.innerHTML='←';
+  btn.onclick=backToChat;
+  header.insertBefore(btn,header.firstChild);
+});
+
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js')
