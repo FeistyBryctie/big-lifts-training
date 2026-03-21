@@ -302,6 +302,10 @@ textarea::placeholder{color:var(--muted2);}
       <div class="drawer-item" onclick="drawerNav('trophies')"><span class="drawer-item-icon">🏆</span>Trophies</div>
       <div class="drawer-item" onclick="drawerNav('export')"><span class="drawer-item-icon">📤</span>Export</div>
     </div>
+    <div class="drawer-section">
+      <div class="drawer-section-label">SETTINGS</div>
+      <div class="drawer-item" onclick="closeDrawer();promptApiKey()"><span class="drawer-item-icon">🔑</span>API Key</div>
+    </div>
   </div>
 </div>
 
@@ -642,21 +646,44 @@ const WORKOUT_TYPES = [
 ];
 
 const ACHIEVEMENTS = [
-  {id:'first',    icon:'🩸', name:'FIRST BLOOD',    desc:'Log your first session',       check:s=>s.total>=1},
-  {id:'week',     icon:'📅', name:'WEEK WARRIOR',   desc:'7 sessions logged',            check:s=>s.total>=7},
-  {id:'month',    icon:'🗓', name:'IRON MONTH',     desc:'30 sessions logged',           check:s=>s.total>=30},
-  {id:'push10',   icon:'💪', name:'PUSH KING',      desc:'10 push days',                 check:s=>(s.byType.push||0)>=10},
-  {id:'legs5',    icon:'🦵', name:'LEG DAY HERO',   desc:'5 leg days',                   check:s=>(s.byType.legs||0)>=5},
-  {id:'cardio10', icon:'🏃', name:'CARDIO DEMON',   desc:'10 cardio sessions',           check:s=>(s.byType.cardio||0)>=10},
-  {id:'yoga5',    icon:'🧘', name:'THE YOGI',       desc:'5 DDP Yoga sessions',          check:s=>(s.byType.yoga||0)>=5},
-  {id:'streak5',  icon:'🔥', name:'ON FIRE',        desc:'5-day streak',                 check:s=>s.streak>=5},
-  {id:'spectrum', icon:'🌐', name:'FULL SPECTRUM',  desc:'Try all 7 workout types',      check:s=>Object.keys(s.byType).length>=7},
-  {id:'xp1000',   icon:'💯', name:'CENTURION',      desc:'1,000 XP earned',              check:s=>s.totalXP>=1000},
-  {id:'lv5',      icon:'⚡', name:'HALFWAY THERE',  desc:'Reach level 5',                check:s=>s.level>=5},
-  {id:'lv10',     icon:'👑', name:'THE BIG ONE', desc:'Reach level 10',               check:s=>s.level>=10},
-  {id:'lv20',     icon:'🌟', name:'ASCENDED',       desc:'Reach level 20',               check:s=>s.level>=20},
-  {id:'mullet',   icon:'🤘', name:'THE MULLET GOD', desc:'Log 50 total sessions',        check:s=>s.total>=50},
-  {id:'nak_muay',  icon:'🥊', name:'NAK MUAY',       desc:'Log 10 Muay Thai sessions',    check:s=>(s.byType.muaythai||0)>=10},
+  // FIRST STEPS
+  {id:'first',    icon:'🎮', name:'PRESS START',       desc:'Log your first session',       check:s=>s.total>=1},
+  {id:'week',     icon:'📅', name:'NO OFF DAYS',       desc:'7 sessions logged',            check:s=>s.total>=7},
+  {id:'month',    icon:'💀', name:'THE GRIND',         desc:'30 sessions logged',           check:s=>s.total>=30},
+  {id:'mullet',   icon:'🤘', name:'THE MULLET GOD',    desc:'50 sessions logged',           check:s=>s.total>=50},
+  {id:'hundo',    icon:'☢️', name:'WEAPONS GRADE',     desc:'100 sessions logged',          check:s=>s.total>=100},
+  // SPLITS
+  {id:'push10',   icon:'💪', name:'CHEST BLASTER',     desc:'10 push days',                 check:s=>(s.byType.push||0)>=10},
+  {id:'pull10',   icon:'🔗', name:'BARN DOOR BACK',    desc:'10 pull days',                 check:s=>(s.byType.pull||0)>=10},
+  {id:'legs5',    icon:'🦵', name:'WHEELS',            desc:'5 leg days',                   check:s=>(s.byType.legs||0)>=5},
+  {id:'cardio10', icon:'🫁', name:'CARDIO KILLS',      desc:'10 cardio sessions',           check:s=>(s.byType.cardio||0)>=10},
+  {id:'yoga5',    icon:'💎', name:'BANG!',              desc:'5 DDP Yoga sessions',          check:s=>(s.byType.yoga||0)>=5},
+  {id:'nak_muay', icon:'🥊', name:'NAK MUAY',          desc:'10 Muay Thai sessions',        check:s=>(s.byType.muaythai||0)>=10},
+  {id:'spectrum', icon:'🌀', name:'FULL ROSTER',       desc:'Try all 7 workout types',      check:s=>Object.keys(s.byType).length>=7},
+  // STREAKS
+  {id:'streak3',  icon:'🔥', name:'3 COUNT',           desc:'3-day streak',                 check:s=>s.streak>=3},
+  {id:'streak5',  icon:'🔥', name:'FIVE MOVES',        desc:'5-day streak',                 check:s=>s.streak>=5},
+  {id:'streak7',  icon:'⚡', name:'UNBREAKABLE',       desc:'7-day streak',                 check:s=>s.streak>=7},
+  {id:'streak14', icon:'👊', name:'KEPT GOING',        desc:'14-day streak',                check:s=>s.streak>=14},
+  // XP
+  {id:'xp1000',   icon:'💯', name:'OVER 9000',         desc:'1,000 XP earned',              check:s=>s.totalXP>=1000},
+  {id:'xp5000',   icon:'🏆', name:'BOSS FIGHT WON',   desc:'5,000 XP earned',              check:s=>s.totalXP>=5000},
+  {id:'xp9000',   icon:'📡', name:'MAX LEVEL',         desc:'9,000 XP earned',              check:s=>s.totalXP>=9000},
+  // LEVELS
+  {id:'lv5',      icon:'⭐', name:'MIDCARD',           desc:'Reach level 5',                check:s=>s.level>=5},
+  {id:'lv10',     icon:'🏛', name:'MAIN EVENT',        desc:'Reach level 10',               check:s=>s.level>=10},
+  {id:'lv20',     icon:'👑', name:'UNDISPUTED',        desc:'Reach level 20',               check:s=>s.level>=20},
+  // PRs
+  {id:'pr1',      icon:'🏅', name:'NEW HIGH SCORE',    desc:'Log your first PR',            check:s=>Object.keys(s.prs||{}).length>=1},
+  {id:'pr5',      icon:'📊', name:'THE RECORD BOOK',   desc:'5 different PR lifts',         check:s=>Object.keys(s.prs||{}).length>=5},
+  // NUTRITION & BODY
+  {id:'macro1',   icon:'🥩', name:'EAT BIG',           desc:'Log food for the first time',  check:s=>{const t=new Date().toLocaleDateString('en-US');return s.nutrition&&s.nutrition[t]&&s.nutrition[t].foods&&s.nutrition[t].foods.length>=1;}},
+  {id:'checkin1', icon:'📋', name:'WEIGH IN',          desc:'Complete a check-in',          check:s=>s.lastCheckin!==null},
+  // EARNED
+  {id:'pumping',  icon:'🏋', name:'PUMPING IRON',      desc:'20 combined push + pull days', check:s=>((s.byType.push||0)+(s.byType.pull||0))>=20},
+  {id:'triple',   icon:'🩸', name:'TRIPLE THREAT',     desc:'Earn 3 trophies',              check:s=>s.unlocked.length>=3},
+  {id:'ten',      icon:'🐍', name:'SNAKE EATER',       desc:'Earn 10 trophies',             check:s=>s.unlocked.length>=10},
+  {id:'twenty',   icon:'🌟', name:'HALL OF FAME',      desc:'Earn 20 trophies',             check:s=>s.unlocked.length>=20},
 ];
 
 // ══════════════════════════
@@ -826,6 +853,34 @@ function switchTab(tab,btn){
 // ══════════════════════════
 
 let chatHistory=[],loading=false,currentMode='train';
+
+// ══════════════════════════
+//  API KEY MANAGEMENT
+// ══════════════════════════
+function getApiKey(){return localStorage.getItem('blt_api_key')||'';}
+function setApiKey(key){localStorage.setItem('blt_api_key',key);}
+function promptApiKey(){
+  const overlay=el('apiKeyOverlay');
+  if(overlay)overlay.classList.add('open');
+}
+function saveApiKeyFromModal(){
+  const inp=el('apiKeyInput');
+  if(!inp||!inp.value.trim())return;
+  setApiKey(inp.value.trim());
+  const overlay=el('apiKeyOverlay');
+  if(overlay)overlay.classList.remove('open');
+  showAchToast('🔑','API KEY SAVED','AI features are now active');
+}
+function closeApiKeyModal(){
+  const overlay=el('apiKeyOverlay');
+  if(overlay)overlay.classList.remove('open');
+}
+function apiHeaders(){
+  const key=getApiKey();
+  const h={'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'};
+  if(key)h['x-api-key']=key;
+  return h;
+}
 const PROMPTS={
   train:`You are a trainer in the mold of Greg Plitt — intense, driven, charismatic. You're training Bryce Urbantke — 29yo male, Austin TX. PPL split, aesthetics + strength, optimizing naturally post-TRT. Use his PR data from the live context below for weight targets. Talk directly to him. Short punchy sentences. Challenge him. Give precise programming with sets × reps, weight targets, rest periods. **Bold** exercises and numbers. End with something that makes him want to train right now.`,
   nutrition:`You are a coach in the mold of Greg Plitt — nutrition is a weapon. Coaching Bryce Urbantke — 29yo, PPL split, lean muscle/aesthetics, optimizing testosterone naturally post-TRT. Direct, specific, real numbers. **Bold** key numbers and foods. Practical for a guy who travels for work.`,
@@ -876,8 +931,9 @@ async function send(){
   // Cap chat history to last 20 messages to avoid API token limits
   if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
   showTyping();
+  if(!getApiKey()){hideTyping();promptApiKey();chatHistory.pop();loading=false;document.getElementById('sendBtn').disabled=false;return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
     const data=await res.json();hideTyping();
     if(data.content?.[0]?.text){
       let r=data.content[0].text;
@@ -1103,25 +1159,41 @@ async function searchFood(){
   results.style.display='block';
   results.innerHTML='<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2)">Searching...</div>';
   try{
-    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(query)+'&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments';
+    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(query)+'&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size';
     const res=await fetch(url);
     const data=await res.json();
     const products=(data.products||[]).filter(p=>p.product_name&&p.nutriments&&(p.nutriments['energy-kcal_100g']||p.nutriments['proteins_100g']));
     if(!products.length){results.innerHTML='<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2)">No results found.</div>';return;}
     results.innerHTML='';
-    products.slice(0,6).forEach(p=>{
+    products.slice(0,6).forEach((p,idx)=>{
       const name=p.product_name||'Unknown';
       const nn=p.nutriments;
-      const protein=Math.round(parseFloat(nn['proteins_100g']||0));
-      const carbs=Math.round(parseFloat(nn['carbohydrates_100g']||0));
-      const fats=Math.round(parseFloat(nn['fat_100g']||0));
-      const kcal=protein*4+carbs*4+fats*9;
-      const safeName=name.substring(0,30).replace(/'/g,"\\'");
-      const d=document.createElement('div');d.className='food-result-item';
-      d.innerHTML='<div class="food-result-info"><div class="food-result-name">'+name.substring(0,40)+'</div><div class="food-result-mpill">P:'+protein+'g C:'+carbs+'g F:'+fats+'g per 100g</div></div><div class="food-result-macros"><div class="food-result-kcal">'+kcal+'</div><div class="food-result-mpill">kcal</div></div><button class="food-result-add" onclick="addFoodToLog(\''+safeName+'\','+protein+','+carbs+','+fats+')">+</button>';
+      const p100=parseFloat(nn['proteins_100g']||0);
+      const c100=parseFloat(nn['carbohydrates_100g']||0);
+      const f100=parseFloat(nn['fat_100g']||0);
+      const safeName=name.substring(0,30).replace(/'/g,"\\'").replace(/"/g,'');
+      const d=document.createElement('div');d.className='food-result-item';d.style.flexWrap='wrap';
+      d.innerHTML='<div class="food-result-info"><div class="food-result-name">'+name.substring(0,40)+'</div><div class="food-result-mpill">per 100g: P:'+Math.round(p100)+'g C:'+Math.round(c100)+'g F:'+Math.round(f100)+'g</div></div>'
+        +'<div style="display:flex;align-items:center;gap:5px;width:100%;margin-top:6px;">'
+        +'<input type="number" id="srv_'+idx+'" value="100" min="1" style="width:60px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:5px 7px;font-size:12px;color:var(--text);text-align:center;outline:none;" oninput="updateFoodPreview('+idx+','+p100+','+c100+','+f100+')">'
+        +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);">g</span>'
+        +'<div style="flex:1;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);" id="fpv_'+idx+'">P:'+Math.round(p100)+'g C:'+Math.round(c100)+'g F:'+Math.round(f100)+'g = '+Math.round(p100*4+c100*4+f100*9)+' kcal</div>'
+        +'<button class="food-result-add" onclick="addFoodServing(\''+safeName+'\','+p100+','+c100+','+f100+','+idx+')">+</button>'
+        +'</div>';
       results.appendChild(d);
     });
   }catch(err){results.innerHTML='<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2)">Search failed.</div>';}
+}
+function updateFoodPreview(idx,p100,c100,f100){
+  const srv=parseFloat(el('srv_'+idx)&&el('srv_'+idx).value)||100;
+  const ratio=srv/100;
+  const pv=el('fpv_'+idx);
+  if(pv)pv.textContent='P:'+Math.round(p100*ratio)+'g C:'+Math.round(c100*ratio)+'g F:'+Math.round(f100*ratio)+'g = '+Math.round((p100*4+c100*4+f100*9)*ratio)+' kcal';
+}
+function addFoodServing(name,p100,c100,f100,idx){
+  const srv=parseFloat(el('srv_'+idx)&&el('srv_'+idx).value)||100;
+  const ratio=srv/100;
+  addFoodToLog(name+' ('+srv+'g)',Math.round(p100*ratio*10)/10,Math.round(c100*ratio*10)/10,Math.round(f100*ratio*10)/10);
 }
 
 // ══════════════════════════
@@ -1163,8 +1235,15 @@ async function lookupBarcode(barcode){
     const safeName=name.substring(0,30).replace(/'/g,"\\'");
     if(results){
       results.innerHTML='';
-      const d=document.createElement('div');d.className='food-result-item';
-      d.innerHTML='<div class="food-result-info"><div class="food-result-name">'+name.substring(0,40)+'</div><div class="food-result-mpill">P:'+protein+'g C:'+carbs+'g F:'+fats+'g per 100g</div></div><div class="food-result-macros"><div class="food-result-kcal">'+kcal+'</div><div class="food-result-mpill">kcal</div></div><button class="food-result-add" onclick="addFoodToLog(\''+safeName+'\','+protein+','+carbs+','+fats+')">+</button>';
+      const p100=protein,c100=carbs,f100=fats;
+      const d=document.createElement('div');d.className='food-result-item';d.style.flexWrap='wrap';
+      d.innerHTML='<div class="food-result-info"><div class="food-result-name">'+name.substring(0,40)+'</div><div class="food-result-mpill">per 100g: P:'+protein+'g C:'+carbs+'g F:'+fats+'g</div></div>'
+        +'<div style="display:flex;align-items:center;gap:5px;width:100%;margin-top:6px;">'
+        +'<input type="number" id="srv_bc" value="100" min="1" style="width:60px;background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:5px 7px;font-size:12px;color:var(--text);text-align:center;outline:none;" oninput="updateFoodPreview(\'bc\','+p100+','+c100+','+f100+')">'
+        +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);">g</span>'
+        +'<div style="flex:1;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);" id="fpv_bc">P:'+protein+'g C:'+carbs+'g F:'+fats+'g = '+kcal+' kcal</div>'
+        +'<button class="food-result-add" onclick="addFoodServing(\''+safeName+'\','+p100+','+c100+','+f100+',\'bc\')">+</button>'
+        +'</div>';
       results.appendChild(d);
     }
   }catch(err){if(results)results.innerHTML='<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2)">Lookup failed.</div>';}
@@ -1266,8 +1345,9 @@ async function buildProgram(){
   const recent3=(S.checkinHistory||[]).slice(-3);
   const needsDeload=recent3.length>=2&&(recent3.reduce((a,c)=>a+c.energy,0)/recent3.length<2.5);
   const prompt='Build a 7-day weekly training program for Bryce Urbantke — 29yo male, PPL split, aesthetics + strength, also does Muay Thai. PRs: '+topPRs+'. '+lastCI+'. Level: '+S.level+'.'+(needsDeload?' BUILD A DELOAD WEEK — low energy detected.':'')+'\nRespond ONLY with valid JSON, no markdown:\n{"week":[{"type":"push","focus":"Chest & Shoulders","exercises":[{"name":"Incline Bench Press","sets":4,"reps":"6-8","weight":185,"note":"Drive for PR"},...]},...],"coachNote":"One sentence."}\ntype must be: push/pull/legs/muaythai/cardio/rest/full/deload. 7 days total. Use his actual PR numbers for weight targets.';
+  if(!getApiKey()){promptApiKey();return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'You are an elite strength coach. Respond only with valid JSON, no markdown, no backticks.',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'You are an elite strength coach. Respond only with valid JSON, no markdown, no backticks.',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     let raw=(data.content&&data.content[0]&&data.content[0].text)||'';
     raw=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
@@ -1440,8 +1520,9 @@ async function generateMealPlan(){
   const mt=S.macroTargets||{protein:200,carbs:250,fats:70};
   const kcal=mt.protein*4+mt.carbs*4+mt.fats*9;
   const prompt='Build a full day meal plan for Bryce Urbantke — 29yo active male, trains 4-5x/week, Austin TX. Targets: '+mt.protein+'g protein, '+mt.carbs+'g carbs, '+mt.fats+'g fats (~'+kcal+' kcal). Practical real foods. High protein. Respond ONLY with JSON: {"meals":[{"name":"Breakfast","foods":[{"item":"Greek Yogurt","amount":"200g","protein":20,"carbs":8,"fats":1},...]},...,{"name":"Dinner","foods":[...]},{"name":"Snacks","foods":[...]}],"totalProtein":X,"totalCarbs":X,"totalFats":X}';
+  if(!getApiKey()){promptApiKey();return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:'You are a nutrition coach. Respond only with valid JSON, no markdown.',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:'You are a nutrition coach. Respond only with valid JSON, no markdown.',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     let raw=(data.content&&data.content[0]&&data.content[0].text)||'';
     raw=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
@@ -1706,7 +1787,11 @@ renderMeasurements();
 getSuppState();
 if(S.lastCheckin){const d=el("lastCheckinDisplay");if(d)d.textContent="Last: "+S.lastCheckin.date+" - "+S.lastCheckin.weight+"lbs";}
 const lvlName=getLevelData(S.level).title;
-addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>. That pixel art guy in the corner? That's you — built from every session you've logged. Log sessions, earn XP, watch him grow.</p><p>Pick your mode and let's build.</p>`);
+if(getApiKey()){
+  addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>. That pixel art guy in the corner? That's you — built from every session you've logged. Log sessions, earn XP, watch him grow.</p><p>Pick your mode and let's build.</p>`);
+}else{
+  addMsg('ai',`<h3>Welcome Back, Bryce.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>.</p><p>To activate the AI coach, program builder, and meal planner — tap the <strong>☰ menu</strong> and go to <strong>🔑 API Key</strong> to enter your Anthropic key.</p><p>Everything else works without it — log sessions, track PRs, macros, water, and more.</p>`);
+}
 </script>
 
 <!-- PR MODAL -->
@@ -1750,6 +1835,21 @@ addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level
   <video class="scanner-video" id="scannerVideo" autoplay playsinline muted></video>
   <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);letter-spacing:1px;">POINT AT BARCODE</div>
   <button onclick="closeScanner()" style="padding:9px 22px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;cursor:pointer;">CANCEL</button>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiKeyOverlay">
+  <div class="modal">
+    <div class="modal-title">🔑 API KEY</div>
+    <div style="font-size:12px;color:var(--muted2);margin-bottom:12px;line-height:1.5;">Enter your Anthropic API key to enable the AI coach, program builder, and meal planner. Your key is stored locally on your device only.</div>
+    <label class="field-label">API Key</label>
+    <input class="field-input" id="apiKeyInput" type="password" placeholder="sk-ant-...">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:12px;">Get one at <span style="color:var(--fire2);">console.anthropic.com</span></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeApiKeyModal()">Cancel</button>
+      <button class="btn-save" onclick="saveApiKeyFromModal()">Save Key</button>
+    </div>
+  </div>
 </div>
 
 <!-- MOBILE: Me Panel -->
@@ -2005,6 +2105,7 @@ addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level
     <div class="more-item" onclick="moreNav('body')"><span class="more-item-icon">📏</span><span class="more-item-label">Measurements</span></div>
     <div class="more-item" onclick="moreNav('trophies')"><span class="more-item-icon">🏆</span><span class="more-item-label">Earned</span></div>
     <div class="more-item" onclick="moreNav('export')"><span class="more-item-icon">📤</span><span class="more-item-label">Export</span></div>
+    <div class="more-item" onclick="el('moreMenu').classList.remove('active');promptApiKey()"><span class="more-item-icon">🔑</span><span class="more-item-label">API Key</span></div>
   </div>
 </div>
 
@@ -2018,6 +2119,14 @@ document.querySelectorAll('.mobile-panel-header').forEach(header=>{
   btn.onclick=backToChat;
   header.insertBefore(btn,header.firstChild);
 });
+
+// API key modal click-outside-to-close
+const apiOverlay=document.getElementById('apiKeyOverlay');
+if(apiOverlay)apiOverlay.addEventListener('click',function(e){if(e.target===this)closeApiKeyModal();});
+
+// Pre-fill API key input if already saved
+const savedKey=localStorage.getItem('blt_api_key');
+if(savedKey){const inp=document.getElementById('apiKeyInput');if(inp)inp.value=savedKey;}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
