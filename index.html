@@ -305,6 +305,7 @@ textarea::placeholder{color:var(--muted2);}
     <div class="drawer-section">
       <div class="drawer-section-label">SETTINGS</div>
       <div class="drawer-item" onclick="closeDrawer();promptApiKey()"><span class="drawer-item-icon">🔑</span>API Key</div>
+      <div class="drawer-item" onclick="closeDrawer();clearChat()"><span class="drawer-item-icon">🗑</span>Clear Chat</div>
     </div>
   </div>
 </div>
@@ -854,6 +855,14 @@ function switchTab(tab,btn){
 let chatHistory=[],loading=false,currentMode='train';
 
 // ══════════════════════════
+//  CHAT MEMORY
+// ══════════════════════════
+function loadChatHistory(){try{return JSON.parse(localStorage.getItem('blt_chat')||'[]');}catch{return [];}}
+function saveChatHistory(){const toSave=chatHistory.slice(-20);localStorage.setItem('blt_chat',JSON.stringify(toSave));}
+function clearChat(){if(!confirm('Clear all chat history?'))return;chatHistory=[];saveChatHistory();document.getElementById('chat').innerHTML='';const lvl=getLevelData(S.level).title;addMsg('ai','<h3>Fresh Start, Bryce.</h3><p>Level '+S.level+' — '+lvl+'. What are we working on?</p>');}
+chatHistory=loadChatHistory();
+
+// ══════════════════════════
 //  API KEY MANAGEMENT
 // ══════════════════════════
 function getApiKey(){return localStorage.getItem('blt_api_key')||'';}
@@ -944,7 +953,7 @@ async function send(){
       let r=data.content[0].text;
       const macroMatch=r.match(/\{"action":"update_macros"[^}]+\}/);
       if(macroMatch){try{const cmd=JSON.parse(macroMatch[0]);if(cmd.protein&&cmd.carbs&&cmd.fats){S.macroTargets={protein:parseInt(cmd.protein),carbs:parseInt(cmd.carbs),fats:parseInt(cmd.fats)};MACRO_TARGETS.protein=parseInt(cmd.protein);MACRO_TARGETS.carbs=parseInt(cmd.carbs);MACRO_TARGETS.fats=parseInt(cmd.fats);saveState();renderMacros();r=r.replace(macroMatch[0],'').trim();setTimeout(()=>showAchToast('🎯','MACROS UPDATED','P:'+cmd.protein+'g C:'+cmd.carbs+'g F:'+cmd.fats+'g'),600);}}catch(e){}}
-      chatHistory.push({role:'assistant',content:r});addMsg('ai',r);}
+      chatHistory.push({role:'assistant',content:r});saveChatHistory();addMsg('ai',r);}
     else throw new Error();
   }catch(err){hideTyping();document.getElementById('errMsg').textContent='Connection error — check your internet and try again.';document.getElementById('errMsg').classList.add('show');chatHistory.pop();}
   loading=false;document.getElementById('sendBtn').disabled=false;input.focus();
@@ -1792,7 +1801,10 @@ renderMeasurements();
 getSuppState();
 if(S.lastCheckin){const d=el("lastCheckinDisplay");if(d)d.textContent="Last: "+S.lastCheckin.date+" - "+S.lastCheckin.weight+"lbs";}
 const lvlName=getLevelData(S.level).title;
-if(getApiKey()){
+// Restore saved chat or show welcome
+if(chatHistory.length>0){
+  chatHistory.forEach(msg=>addMsg(msg.role==='user'?'user':'ai',msg.content));
+}else if(getApiKey()){
   addMsg('ai',`<h3>Let's Get To Work, Bryce.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>. That pixel art guy in the corner? That's you — built from every session you've logged. Log sessions, earn XP, watch him grow.</p><p>Pick your mode and let's build.</p>`);
 }else{
   addMsg('ai',`<h3>Welcome Back, Bryce.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>.</p><p>To activate the AI coach, program builder, and meal planner — tap the <strong>☰ menu</strong> and go to <strong>🔑 API Key</strong> to enter your Anthropic key.</p><p>Everything else works without it — log sessions, track PRs, macros, water, and more.</p>`);
@@ -2111,6 +2123,7 @@ if(getApiKey()){
     <div class="more-item" onclick="moreNav('trophies')"><span class="more-item-icon">🏆</span><span class="more-item-label">Earned</span></div>
     <div class="more-item" onclick="moreNav('export')"><span class="more-item-icon">📤</span><span class="more-item-label">Export</span></div>
     <div class="more-item" onclick="el('moreMenu').classList.remove('active');promptApiKey()"><span class="more-item-icon">🔑</span><span class="more-item-label">API Key</span></div>
+    <div class="more-item" onclick="el('moreMenu').classList.remove('active');clearChat()"><span class="more-item-icon">🗑</span><span class="more-item-label">Clear Chat</span></div>
   </div>
 </div>
 
