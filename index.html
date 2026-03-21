@@ -25,7 +25,7 @@
   --mustache:#6b4428;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overflow:hidden;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overflow:hidden;-webkit-overflow-scrolling:touch;}
 .app{display:flex;height:100vh;}
 
 /* SIDEBAR */
@@ -189,14 +189,35 @@ textarea::placeholder{color:var(--muted2);}
 
 /* ══ PR TRACKER ══ */
 .pr-list{padding:6px 0;}.pr-entry{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;}.pr-entry:hover{background:rgba(255,69,0,0.04);}.pr-lift{flex:1;font-size:13px;font-weight:500;}.pr-weight{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--amber);}.pr-unit{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);}.pr-date{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);}.pr-empty{text-align:center;padding:24px 16px;font-size:12px;color:var(--muted2);font-style:italic;}.pr-btn{margin:10px 14px 12px;background:transparent;border:1px dashed var(--border2);border-radius:8px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;color:var(--muted2);cursor:pointer;text-transform:uppercase;transition:all 0.2s;width:calc(100% - 28px);}.pr-btn:hover{border-color:var(--amber);color:var(--amber);}
+/* ══ HAMBURGER MENU ══ */
+.hamburger{display:none;width:38px;height:38px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);cursor:pointer;flex-shrink:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all 0.15s;}
+.hamburger:hover{border-color:var(--fire);}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text);border-radius:1px;transition:all 0.25s;}
+.hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:150;display:none;opacity:0;transition:opacity 0.25s;}
+.drawer-overlay.open{display:block;opacity:1;}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;max-width:80vw;background:var(--s1);border-right:1px solid var(--border);z-index:160;transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{padding:16px 18px 12px;border-bottom:1px solid var(--border);}
+.drawer-nav{padding:8px 0;flex:1;overflow-y:auto;}
+.drawer-section{padding:4px 12px;margin-top:4px;}
+.drawer-section-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted2);padding:8px 6px 4px;}
+.drawer-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:13px;font-weight:500;color:var(--muted2);}
+.drawer-item:hover,.drawer-item.active{background:rgba(255,69,0,0.06);color:var(--fire2);}
+.drawer-item-icon{font-size:18px;width:24px;text-align:center;}
+
 /* ══ MOBILE ══ */
 .mobile-nav{display:none;}.mobile-panel{display:none;}
 @media(max-width:768px){
+  html,body{overflow:hidden;}
   .sidebar{display:none;}.app{flex-direction:column;height:100vh;height:100dvh;}
-  .main{width:100%;flex:1;min-height:0;}
-  .topbar{padding:8px 10px;overflow-x:auto;}.mode-tabs{gap:3px;}.mode-tab{padding:5px 8px;font-size:10px;letter-spacing:1px;}.streak-pill{display:none;}
+  .main{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .hamburger{display:flex;}
+  .topbar{padding:8px 10px;overflow-x:auto;gap:6px;}.mode-tabs{gap:3px;flex:1;overflow-x:auto;}.mode-tab{padding:5px 8px;font-size:10px;letter-spacing:1px;white-space:nowrap;}.streak-pill{display:none;}
   .chips-bar{padding:7px 10px;gap:5px;}.chip{padding:5px 10px;font-size:11px;}
-  .chat{padding:10px 12px;gap:10px;}.bubble{font-size:13px;padding:10px 12px;}.input-zone{padding:8px 10px 10px;}.input-hint{display:none;}
+  .chat{padding:10px 12px;gap:10px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}.bubble{font-size:13px;padding:10px 12px;}.input-zone{padding:8px 10px 10px;}.input-hint{display:none;}
   .mobile-nav{display:flex;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;z-index:100;}
   .mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 9px;background:transparent;border:none;color:var(--muted2);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.5px;cursor:pointer;transition:color 0.15s;gap:3px;}
   .mobile-nav-btn.active{color:var(--fire2);}
@@ -204,11 +225,11 @@ textarea::placeholder{color:var(--muted2);}
   .mobile-panel{position:fixed;inset:0;bottom:57px;background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
   .mobile-panel.active{display:flex;}
   .mobile-panel-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;}
+  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
   .modal{width:95vw;padding:16px;}.wtype-grid{grid-template-columns:repeat(3,1fr);}
   .lu-box{padding:22px 18px;}.lu-level{font-size:60px;}.lu-title{font-size:30px;}
 }
-@media(min-width:769px){.mobile-nav{display:none!important;}.mobile-panel{display:none!important;}}
+@media(min-width:769px){.mobile-nav{display:none!important;}.mobile-panel{display:none!important;}.drawer{display:none!important;}.drawer-overlay{display:none!important;}.hamburger{display:none!important;}}
 /* ══ MORE MENU ══ */
 .more-menu{position:fixed;bottom:57px;left:0;right:0;background:var(--s1);border-top:1px solid var(--border);z-index:80;display:none;padding:12px 16px 16px;}
 .more-menu.active{display:block;}
@@ -238,6 +259,40 @@ textarea::placeholder{color:var(--muted2);}
 </head>
 <body>
 <div class="app">
+
+<!-- HAMBURGER DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="brand">BIG LIFTS</div>
+    <div class="brand-sub">TRAINING SYSTEM</div>
+  </div>
+  <div class="drawer-nav">
+    <div class="drawer-section">
+      <div class="drawer-section-label">NAVIGATE</div>
+      <div class="drawer-item active" onclick="drawerNav('chat')"><span class="drawer-item-icon">💬</span>Chat</div>
+      <div class="drawer-item" onclick="drawerNav('me')"><span class="drawer-item-icon">👤</span>Me / Check-In</div>
+      <div class="drawer-item" onclick="drawerNav('program')"><span class="drawer-item-icon">📅</span>Program</div>
+      <div class="drawer-item" onclick="drawerNav('nutrition')"><span class="drawer-item-icon">🥩</span>Macros</div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-label">TRACK</div>
+      <div class="drawer-item" onclick="drawerNav('log')"><span class="drawer-item-icon">📋</span>Session Log</div>
+      <div class="drawer-item" onclick="drawerNav('prs')"><span class="drawer-item-icon">💪</span>PR Board</div>
+      <div class="drawer-item" onclick="drawerNav('overload')"><span class="drawer-item-icon">📈</span>Next Session</div>
+      <div class="drawer-item" onclick="drawerNav('body')"><span class="drawer-item-icon">📏</span>Measurements</div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-label">TOOLS</div>
+      <div class="drawer-item" onclick="drawerNav('timer')"><span class="drawer-item-icon">⏱</span>Round Timer</div>
+      <div class="drawer-item" onclick="drawerNav('1rm')"><span class="drawer-item-icon">🧮</span>1RM Calculator</div>
+      <div class="drawer-item" onclick="drawerNav('meals')"><span class="drawer-item-icon">🍽️</span>Meal Plan</div>
+      <div class="drawer-item" onclick="drawerNav('supps')"><span class="drawer-item-icon">💊</span>Supplements</div>
+      <div class="drawer-item" onclick="drawerNav('trophies')"><span class="drawer-item-icon">🏆</span>Trophies</div>
+      <div class="drawer-item" onclick="drawerNav('export')"><span class="drawer-item-icon">📤</span>Export</div>
+    </div>
+  </div>
+</div>
 
 <aside class="sidebar">
   <div class="sidebar-header">
@@ -297,6 +352,9 @@ textarea::placeholder{color:var(--muted2);}
 
 <div class="main">
   <div class="topbar">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleDrawer()">
+      <span></span><span></span><span></span>
+    </button>
     <div class="mode-tabs">
       <button class="mode-tab active" onclick="setMode('train',this)">Training</button>
       <button class="mode-tab" onclick="setMode('nutrition',this)">Nutrition</button>
@@ -1410,6 +1468,39 @@ refreshUI=function(){
 //  UPDATED SEND WITH LIVE CONTEXT
 // ══════════════════════════
 
+
+// ══════════════════════════
+//  HAMBURGER DRAWER
+// ══════════════════════════
+function toggleDrawer(){
+  const drawer=el('drawer');const overlay=el('drawerOverlay');const btn=el('hamburgerBtn');
+  if(!drawer||!overlay)return;
+  const isOpen=drawer.classList.contains('open');
+  if(isOpen){closeDrawer();}else{drawer.classList.add('open');overlay.classList.add('open');if(btn)btn.classList.add('open');}
+}
+function closeDrawer(){
+  const drawer=el('drawer');const overlay=el('drawerOverlay');const btn=el('hamburgerBtn');
+  if(drawer)drawer.classList.remove('open');
+  if(overlay)overlay.classList.remove('open');
+  if(btn)btn.classList.remove('open');
+}
+function drawerNav(tab){
+  closeDrawer();
+  // Update drawer active state
+  document.querySelectorAll('.drawer-item').forEach(d=>d.classList.remove('active'));
+  event.target.closest('.drawer-item').classList.add('active');
+  // Route to the right panel
+  if(tab==='chat'){
+    mobileTab('chat',el('mNavChat'));
+  }else{
+    mobileTab(tab,null);
+    // Also update bottom nav active states
+    document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
+    const navMap={me:'mNavMe',program:'mNavProgram',nutrition:'mNavNutrition'};
+    if(navMap[tab]){const nb=el(navMap[tab]);if(nb)nb.classList.add('active');}
+    else{const nb=el('mNavMore');if(nb)nb.classList.add('active');}
+  }
+}
 
 // ══════════════════════════
 //  MOBILE NAV
