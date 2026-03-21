@@ -932,7 +932,7 @@ async function send(){
   showTyping();
   if(!getApiKey()){hideTyping();promptApiKey();chatHistory.pop();loading=false;document.getElementById('sendBtn').disabled=false;return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
     const data=await res.json();hideTyping();
     if(!res.ok){
       const errText=data.error?.message||'API error '+res.status;
@@ -1352,7 +1352,7 @@ async function buildProgram(){
   const prompt='Build a 7-day weekly training program for Bryce Urbantke — 29yo male, PPL split, aesthetics + strength, also does Muay Thai. PRs: '+topPRs+'. '+lastCI+'. Level: '+S.level+'.'+(needsDeload?' BUILD A DELOAD WEEK — low energy detected.':'')+'\nRespond ONLY with valid JSON, no markdown:\n{"week":[{"type":"push","focus":"Chest & Shoulders","exercises":[{"name":"Incline Bench Press","sets":4,"reps":"6-8","weight":185,"note":"Drive for PR"},...]},...],"coachNote":"One sentence."}\ntype must be: push/pull/legs/muaythai/cardio/rest/full/deload. 7 days total. Use his actual PR numbers for weight targets.';
   if(!getApiKey()){promptApiKey();return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'You are an elite strength coach. Respond only with valid JSON, no markdown, no backticks.',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:'You are an elite strength coach. Respond only with valid JSON, no markdown, no backticks.',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     let raw=(data.content&&data.content[0]&&data.content[0].text)||'';
     raw=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
@@ -1527,7 +1527,7 @@ async function generateMealPlan(){
   const prompt='Build a full day meal plan for Bryce Urbantke — 29yo active male, trains 4-5x/week, Austin TX. Targets: '+mt.protein+'g protein, '+mt.carbs+'g carbs, '+mt.fats+'g fats (~'+kcal+' kcal). Practical real foods. High protein. Respond ONLY with JSON: {"meals":[{"name":"Breakfast","foods":[{"item":"Greek Yogurt","amount":"200g","protein":20,"carbs":8,"fats":1},...]},...,{"name":"Dinner","foods":[...]},{"name":"Snacks","foods":[...]}],"totalProtein":X,"totalCarbs":X,"totalFats":X}';
   if(!getApiKey()){promptApiKey();return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:'You are a nutrition coach. Respond only with valid JSON, no markdown.',messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:'You are a nutrition coach. Respond only with valid JSON, no markdown.',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     let raw=(data.content&&data.content[0]&&data.content[0].text)||'';
     raw=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
