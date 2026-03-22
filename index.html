@@ -385,12 +385,18 @@ textarea::placeholder{color:var(--muted2);}
   <div class="chips-bar" id="chipsBar"></div>
   <div class="chat" id="chat"></div>
   <div class="input-zone">
+    <div id="imgPreview" style="display:none;padding:0 0 8px;position:relative;">
+      <img id="imgThumb" style="max-height:120px;border-radius:8px;border:1px solid var(--border2);">
+      <button onclick="clearImage()" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--s1);border:1px solid var(--border2);color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
     <div class="input-box">
+      <button onclick="el('imgUpload').click()" style="width:36px;height:36px;border-radius:7px;background:var(--s3);border:1px solid var(--border2);color:var(--muted2);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" id="camBtn">📷</button>
+      <input type="file" id="imgUpload" accept="image/*" capture="environment" style="display:none;" onchange="handleImageUpload(this)">
       <textarea id="input" placeholder="Ask about training, nutrition, form, recovery..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="send-btn" id="sendBtn" onclick="send()">↑</button>
     </div>
     <div class="err" id="errMsg">Connection error — try again.</div>
-    <div class="input-hint">ENTER to send · SHIFT+ENTER for new line</div>
+    <div class="input-hint">ENTER to send · SHIFT+ENTER for new line · 📷 attach photo</div>
   </div>
 </div>
 </div>
@@ -691,7 +697,7 @@ const ACHIEVEMENTS = [
 // ══════════════════════════
 
 function defaultState() {
-  return {xp:0,totalXP:0,level:1,streak:0,lastLogDate:null,total:0,byType:{},stats:{str:10,end:10,aes:10,rec:10},unlocked:[],log:[],prs:{},macroTargets:{protein:200,carbs:250,fats:70},lastCheckin:null,checkinHistory:[],program:null,water:{},nutrition:{},mealPlan:null,supps:null,suppLastReset:null,measurements:[]};
+  return {xp:0,totalXP:0,level:1,streak:0,lastLogDate:null,total:0,byType:{},stats:{str:10,end:10,aes:10,rec:10},unlocked:[],log:[],prs:{},macroTargets:{protein:200,carbs:250,fats:70},lastCheckin:null,checkinHistory:[],program:null,water:{},nutrition:{},mealPlan:null,supps:null,suppLastReset:null,measurements:[],savedWorkouts:[]};
 }
 function loadState() { try{return JSON.parse(localStorage.getItem('blt2')||'null')||defaultState();}catch{return defaultState();} }
 function saveState() { localStorage.setItem('blt2', JSON.stringify(S)); }
@@ -916,6 +922,15 @@ function addMsg(role,content){
   const av=document.createElement('div');av.className=`msg-av ${role==='user'?'user':'ai'}`;av.textContent=role==='user'?'BU':'BL';
   const b=document.createElement('div');b.className=`bubble ${role==='user'?'user':'ai'}`;
   b.innerHTML=role==='user'?`<p>${esc(content)}</p>`:fmtAI(content);
+  if(role==='ai'&&content.length>80){
+    const saveBtn=document.createElement('button');
+    saveBtn.style.cssText='display:flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;border-radius:6px;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.15s;';
+    saveBtn.textContent='📌 SAVE TO PROGRAM';
+    saveBtn.onmouseenter=()=>{saveBtn.style.borderColor='var(--fire)';saveBtn.style.color='var(--fire2)';};
+    saveBtn.onmouseleave=()=>{saveBtn.style.borderColor='var(--border2)';saveBtn.style.color='var(--muted2)';};
+    saveBtn.onclick=()=>{saveToProgram(content);saveBtn.textContent='✓ SAVED';saveBtn.style.color='var(--green)';saveBtn.style.borderColor='var(--green)';saveBtn.onclick=null;};
+    b.appendChild(saveBtn);
+  }
   w.appendChild(av);w.appendChild(b);chat.appendChild(w);requestAnimationFrame(()=>chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'}));
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -927,21 +942,83 @@ function fmtAI(text){
 }
 function showTyping(){const chat=document.getElementById('chat');const d=document.createElement('div');d.className='typing-wrap';d.id='typing';d.innerHTML=`<div class="msg-av ai">BL</div><div class="typing-bub"><span></span><span></span><span></span></div>`;chat.appendChild(d);requestAnimationFrame(()=>chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'}));}
 function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+// ══════════════════════════
+//  IMAGE HANDLING
+// ══════════════════════════
+let pendingImage=null;
+function handleImageUpload(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>10*1024*1024){alert('Image too large — keep it under 10MB.');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const base64=e.target.result;
+    const mediaType=file.type||'image/jpeg';
+    pendingImage={base64:base64.split(',')[1],mediaType};
+    const thumb=el('imgThumb');const preview=el('imgPreview');
+    if(thumb)thumb.src=base64;
+    if(preview)preview.style.display='block';
+    const camBtn=el('camBtn');if(camBtn){camBtn.style.borderColor='var(--fire)';camBtn.style.color='var(--fire2)';}
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function clearImage(){
+  pendingImage=null;
+  const preview=el('imgPreview');if(preview)preview.style.display='none';
+  const camBtn=el('camBtn');if(camBtn){camBtn.style.borderColor='var(--border2)';camBtn.style.color='var(--muted2)';}
+}
+
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 function autoResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 function sendQ(text){document.getElementById('input').value=text;send();}
 async function send(){
   if(loading)return;
-  const input=document.getElementById('input');const text=input.value.trim();if(!text)return;
+  const input=document.getElementById('input');const text=input.value.trim();
+  const hasImage=!!pendingImage;
+  if(!text&&!hasImage)return;
   document.getElementById('errMsg').classList.remove('show');
   input.value='';input.style.height='40px';loading=true;document.getElementById('sendBtn').disabled=true;
-  addMsg('user',text);chatHistory.push({role:'user',content:text});
-  // Cap chat history to last 20 messages to avoid API token limits
+
+  // Build display message
+  const displayText=text||(hasImage?'[Photo attached]':'');
+  if(hasImage){
+    // Show image in chat
+    const chat=document.getElementById('chat');
+    const w=document.createElement('div');w.className='msg user';
+    const av=document.createElement('div');av.className='msg-av user';av.textContent='BU';
+    const b=document.createElement('div');b.className='bubble user';
+    b.innerHTML='<img src="data:'+pendingImage.mediaType+';base64,'+pendingImage.base64+'" style="max-width:200px;max-height:200px;border-radius:8px;display:block;margin-bottom:6px;">'+(text?'<p>'+esc(text)+'</p>':'');
+    w.appendChild(av);w.appendChild(b);chat.appendChild(w);
+    requestAnimationFrame(()=>chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'}));
+  }else{
+    addMsg('user',text);
+  }
+
+  // Build API message content
+  let userContent;
+  if(hasImage){
+    userContent=[];
+    userContent.push({type:'image',source:{type:'base64',media_type:pendingImage.mediaType,data:pendingImage.base64}});
+    if(text)userContent.push({type:'text',text:text});
+    else userContent.push({type:'text',text:'Analyze this image. Be direct and specific.'});
+  }else{
+    userContent=text;
+  }
+
+  // Store text-only version in chat history (images too large to persist)
+  const historyContent=text||(hasImage?'[Sent a photo for analysis]':'');
+  chatHistory.push({role:'user',content:historyContent});
   if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
+
+  // Build messages array — use image content for the latest message only
+  const apiMessages=[...chatHistory.slice(0,-1),{role:'user',content:userContent}];
+
+  clearImage();
   showTyping();
   if(!getApiKey()){hideTyping();promptApiKey();chatHistory.pop();loading=false;document.getElementById('sendBtn').disabled=false;return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:chatHistory})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:PROMPTS[currentMode]+getLiveContext(),messages:apiMessages})});
     const data=await res.json();hideTyping();
     if(!res.ok){
       const errText=data.error?.message||'API error '+res.status;
@@ -1316,6 +1393,46 @@ function submitCheckin(){
 }
 
 // ══════════════════════════
+//  SAVED WORKOUTS
+// ══════════════════════════
+function getSavedWorkouts(){if(!S.savedWorkouts)S.savedWorkouts=[];return S.savedWorkouts;}
+function saveToProgram(content){
+  const saved=getSavedWorkouts();
+  const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const modeLabels={train:'Training',nutrition:'Nutrition',recovery:'Recovery',muaythai:'Muay Thai'};
+  saved.unshift({content,date:today,mode:modeLabels[currentMode]||'Training',id:Date.now()});
+  if(saved.length>20)saved.pop();
+  saveState();
+  showAchToast('📌','SAVED','Added to your Program tab');
+}
+function deleteSavedWorkout(id){
+  if(!confirm('Delete this saved workout?'))return;
+  const saved=getSavedWorkouts();
+  const idx=saved.findIndex(w=>w.id===id);
+  if(idx>=0)saved.splice(idx,1);
+  saveState();renderProgram();
+}
+function renderSavedWorkouts(container){
+  const saved=getSavedWorkouts();
+  if(!saved.length)return;
+  const section=document.createElement('div');
+  section.innerHTML='<div style="padding:12px 18px 8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:14px;letter-spacing:3px;color:var(--fire2);border-top:1px solid var(--border);">SAVED FROM COACH</div>';
+  saved.forEach(w=>{
+    const card=document.createElement('div');
+    card.style.cssText='margin:6px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;overflow:hidden;';
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--s3);cursor:pointer;';
+    header.innerHTML='<div><span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;">'+w.mode+'</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);margin-left:8px;">'+w.date+'</span></div><button onclick="event.stopPropagation();deleteSavedWorkout('+w.id+')" style="background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:12px;">✕</button>';
+    const body=document.createElement('div');
+    body.style.cssText='display:none;padding:10px 12px;font-size:13px;line-height:1.6;';
+    body.innerHTML=fmtAI(w.content);
+    header.onclick=()=>{body.style.display=body.style.display==='none'?'block':'none';};
+    card.appendChild(header);card.appendChild(body);section.appendChild(card);
+  });
+  container.appendChild(section);
+}
+
+// ══════════════════════════
 //  PROGRAM ENGINE
 // ══════════════════════════
 function getProgramState(){if(!S.program)S.program={week:null,built:null};return S.program;}
@@ -1324,6 +1441,7 @@ function renderProgram(){
   const prog=getProgramState();
   if(!prog.week){
     content.innerHTML='<div style="text-align:center;padding:30px;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;color:var(--muted2);margin-bottom:8px;">NO PROGRAM YET</div><div style="font-size:12px;color:var(--muted2);margin-bottom:16px;">Hit BUILD to generate your personalized weekly program.</div><button onclick="buildProgram()" style="padding:10px 24px;border-radius:8px;background:linear-gradient(135deg,var(--fire),var(--amber));border:none;color:white;font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;cursor:pointer;">BUILD MY PROGRAM</button></div>';
+    renderSavedWorkouts(content);
     return;
   }
   const DAY_NAMES=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -1342,6 +1460,7 @@ function renderProgram(){
     content.appendChild(dayEl);
   });
   if(prog.built){const f=document.createElement('div');f.style.cssText='padding:10px 18px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted2);';f.textContent='Built: '+prog.built;content.appendChild(f);}
+  renderSavedWorkouts(content);
 }
 function checkDeload(){
   const banner=el('deloadBanner');if(!banner)return;
