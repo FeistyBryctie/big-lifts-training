@@ -296,6 +296,7 @@ textarea::placeholder{color:var(--muted2);}
     <div class="drawer-section">
       <div class="drawer-section-label">TOOLS</div>
       <div class="drawer-item" onclick="drawerNav('timer')"><span class="drawer-item-icon">⏱</span>Round Timer</div>
+      <div class="drawer-item" onclick="drawerNav('water')"><span class="drawer-item-icon">💧</span>Water</div>
       <div class="drawer-item" onclick="drawerNav('1rm')"><span class="drawer-item-icon">🧮</span>1RM Calculator</div>
       <div class="drawer-item" onclick="drawerNav('meals')"><span class="drawer-item-icon">🍽️</span>Meal Plan</div>
       <div class="drawer-item" onclick="drawerNav('supps')"><span class="drawer-item-icon">💊</span>Supplements</div>
@@ -685,6 +686,8 @@ const ACHIEVEMENTS = [
   // FEED THE MACHINE
   {id:'macro1',   icon:'🥩', name:'FED',                desc:'Log food for the first time',  check:s=>{const t=new Date().toLocaleDateString('en-US');return s.nutrition&&s.nutrition[t]&&s.nutrition[t].foods&&s.nutrition[t].foods.length>=1;}},
   {id:'checkin1', icon:'📋', name:'ACCOUNTABLE',        desc:'Complete a check-in',          check:s=>s.lastCheckin!==null},
+  {id:'hydrated', icon:'💧', name:'HYDRATED',           desc:'Hit a full gallon of water',   check:s=>{const t=new Date().toLocaleDateString('en-US');return s.water&&s.water[t]>=16;}},
+  {id:'protein',  icon:'🥩', name:'PROTEIN MACHINE',    desc:'Hit your daily protein target', check:s=>{const t=new Date().toLocaleDateString('en-US');const mt=s.macroTargets||{protein:200};return s.nutrition&&s.nutrition[t]&&s.nutrition[t].protein>=mt.protein;}},
   // LEGACY
   {id:'pumping',  icon:'🏋', name:'VOLUME DEALER',      desc:'20 combined push + pull days', check:s=>((s.byType.push||0)+(s.byType.pull||0))>=20},
   {id:'triple',   icon:'🐍', name:'SNAKE EATER',        desc:'Earn 3 trophies',              check:s=>s.unlocked.length>=3},
@@ -1132,7 +1135,7 @@ function getLiveContext(){
   const kcal=Math.round(n.protein*4+n.carbs*4+n.fats*9);
   const recentLog=[...S.log].reverse().slice(0,5).map(e=>e.date+': '+e.type+(e.lift?' ('+e.liftWeight+'lbs '+e.lift+')':'')).join(', ')||'No sessions yet';
   const topPRs=Object.values(S.prs||{}).sort((a,b)=>b.weight-a.weight).slice(0,5).map(p=>p.name+': '+p.weight+'lbs').join(', ')||'No PRs logged';
-  const lastCI=S.lastCheckin?'Last check-in: weight '+S.lastCheckin.weight+'lbs, energy '+S.lastCheckin.energy+'/5, sleep '+S.lastCheckin.sleep+'/5':'No check-ins yet';
+  const lastCI=S.lastCheckin?'Last daily check-in: weight '+S.lastCheckin.weight+'lbs, energy '+S.lastCheckin.energy+'/5, sleep '+S.lastCheckin.sleep+'/5, soreness '+(S.lastCheckin.soreness||'?')+'/5, mood '+(S.lastCheckin.mood||'?')+'/5, hunger '+S.lastCheckin.hunger+'/5 (all ratings 1-5 scale, 1=worst 5=best, soreness 1=very sore 5=fresh)'+(S.lastCheckin.notes?' Notes: '+S.lastCheckin.notes:''):'No check-ins yet';
   const mt=S.macroTargets||{protein:200,carbs:250,fats:70};
   const prog=S.program&&S.program.week;
   const progSummary=prog?'Current program: '+prog.map((d,i)=>DAYS_OF_WEEK[i].substring(0,3)+':'+d.type).join(', '):'No program built yet';
@@ -1210,10 +1213,24 @@ function addFoodToLog(name,protein,carbs,fats){
   const n=getNutritionState();
   n.foods.push({name,protein,carbs,fats});
   n.protein+=protein;n.carbs+=carbs;n.fats+=fats;
+  // Award XP for logging food
+  awardXP(10,{aes:1});
+  // Bonus XP if protein target hit
+  const mt=S.macroTargets||{protein:200};
+  if(n.protein>=mt.protein){
+    const today=new Date().toLocaleDateString('en-US');
+    if(!S.proteinXpDays)S.proteinXpDays={};
+    if(!S.proteinXpDays[today]){
+      S.proteinXpDays[today]=true;
+      awardXP(20,{str:2,aes:1});
+      saveState();
+      showAchToast('🥩','PROTEIN TARGET HIT +20xp',Math.round(n.protein)+'g / '+mt.protein+'g');
+    }
+  }
   saveState();renderMacros();
   const r=el('foodResults');if(r){r.style.display='none';r.innerHTML='';}
   const inp=el('foodSearchInput');if(inp)inp.value='';
-  showAchToast('🥩',name.substring(0,20),'P:'+Math.round(protein)+'g C:'+Math.round(carbs)+'g F:'+Math.round(fats)+'g');
+  showAchToast('🥩',name.substring(0,20)+' +10xp','P:'+Math.round(protein)+'g C:'+Math.round(carbs)+'g F:'+Math.round(fats)+'g');
 }
 function removeFood(index){
   const n=getNutritionState();
@@ -1352,16 +1369,62 @@ function renderWater(){
     const btn=document.createElement('button');
     btn.className='water-cup'+(i<=count?' filled':'');
     btn.textContent='💧';
-    btn.onclick=()=>{S.water[today]=i<=count?i-1:i;saveState();renderWater();};
+    btn.onclick=()=>{
+      const prev=S.water[today]||0;
+      const newCount=i<=prev?i-1:i;
+      S.water[today]=newCount;
+      saveState();renderWater();
+      // Award XP for adding cups (not removing)
+      if(newCount>prev){
+        awardXP(5,{rec:1});
+        if(newCount>=16){
+          if(!S.waterXpDays)S.waterXpDays={};
+          if(!S.waterXpDays[today]){
+            S.waterXpDays[today]=true;
+            awardXP(15,{rec:2});
+            showAchToast('💧','GALLON DOWN +15xp','Full gallon today');
+          }
+        }
+      }
+    };
     cups.appendChild(btn);
   }
   if(goal)goal.textContent=count+' / 16 cups (1 gal)';
+  // Also update standalone water panel if it exists
+  const cups2=el('waterCups2');const goal2=el('waterGoal2');
+  if(cups2){
+    cups2.innerHTML='';
+    for(let i=1;i<=16;i++){
+      const btn2=document.createElement('button');
+      btn2.className='water-cup'+(i<=count?' filled':'');
+      btn2.textContent='💧';
+      btn2.onclick=()=>{
+        const prev2=S.water[today]||0;
+        const newCount2=i<=prev2?i-1:i;
+        S.water[today]=newCount2;
+        saveState();renderWater();
+        if(newCount2>prev2){
+          awardXP(5,{rec:1});
+          if(newCount2>=16){
+            if(!S.waterXpDays)S.waterXpDays={};
+            if(!S.waterXpDays[today]){
+              S.waterXpDays[today]=true;
+              awardXP(15,{rec:2});
+              showAchToast('💧','GALLON DOWN +15xp','Full gallon today');
+            }
+          }
+        }
+      };
+      cups2.appendChild(btn2);
+    }
+  }
+  if(goal2)goal2.textContent=count+' / 16 cups (1 gal)';
 }
 
 // ══════════════════════════
 //  CHECK-IN
 // ══════════════════════════
-const checkinRatings={energy:0,sleep:0,hunger:0};
+const checkinRatings={energy:0,sleep:0,hunger:0,soreness:0,mood:0};
 function setCheckinRating(type,val){
   checkinRatings[type]=val;
   const btns=el('ci'+type.charAt(0).toUpperCase()+type.slice(1)+'Btns');
@@ -1372,23 +1435,26 @@ function submitCheckin(){
   const weightEl=el('ciWeight');const weight=weightEl?parseFloat(weightEl.value):0;
   if(!weight){alert('Enter your weight.');return;}
   const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  const entry={weight,energy:checkinRatings.energy||3,sleep:checkinRatings.sleep||3,hunger:checkinRatings.hunger||3,date:today};
+  const notes=(el('ciNotes')&&el('ciNotes').value.trim())||'';
+  const entry={weight,energy:checkinRatings.energy||3,sleep:checkinRatings.sleep||3,soreness:checkinRatings.soreness||3,mood:checkinRatings.mood||3,hunger:checkinRatings.hunger||3,notes,date:today};
   S.lastCheckin=entry;
   if(!S.checkinHistory)S.checkinHistory=[];
   S.checkinHistory.push(entry);
-  if(S.checkinHistory.length>12)S.checkinHistory.shift();
+  if(S.checkinHistory.length>30)S.checkinHistory.shift();
+  awardXP(15,{rec:2});
   saveState();
   const disp=el('lastCheckinDisplay');
-  if(disp)disp.textContent='Last: '+today+' - '+weight+'lbs E:'+entry.energy+' S:'+entry.sleep;
+  if(disp)disp.textContent='Last: '+today+' - '+weight+'lbs E:'+entry.energy+' S:'+entry.sleep+' Sore:'+entry.soreness+' Mood:'+entry.mood;
   if(weightEl)weightEl.value='';
-  ['Energy','Sleep','Hunger'].forEach(t=>{const b=el('ci'+t+'Btns');if(b)b.querySelectorAll('.rating-btn').forEach(x=>x.classList.remove('selected'));});
-  checkinRatings.energy=checkinRatings.sleep=checkinRatings.hunger=0;
-  showAchToast('📊','CHECK-IN SAVED',weight+'lbs - Energy '+entry.energy+'/5');
+  if(el('ciNotes'))el('ciNotes').value='';
+  ['Energy','Sleep','Hunger','Soreness','Mood'].forEach(t=>{const b=el('ci'+t+'Btns');if(b)b.querySelectorAll('.rating-btn').forEach(x=>x.classList.remove('selected'));});
+  checkinRatings.energy=checkinRatings.sleep=checkinRatings.hunger=checkinRatings.soreness=checkinRatings.mood=0;
+  showAchToast('📊','CHECK-IN +15xp',weight+'lbs - Energy '+entry.energy+'/5');
   setTimeout(()=>{
     document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
     const nutritionBtn=[...document.querySelectorAll('.mode-tab')].find(b=>b.textContent.includes('NUTRITION')||b.textContent.includes('Nutrition'));
     if(nutritionBtn){nutritionBtn.classList.add('active');currentMode='nutrition';renderChips();}
-    setTimeout(()=>sendQ('I just checked in: '+weight+'lbs, energy '+entry.energy+'/5, sleep '+entry.sleep+'/5, hunger '+entry.hunger+'/5. Analyze my data and adjust my macros or training if needed. Be direct.'),300);
+    setTimeout(()=>sendQ('Daily check-in: '+weight+'lbs. All ratings are on a 1-5 scale where 1=worst and 5=best. Energy: '+entry.energy+'/5, Sleep quality: '+entry.sleep+'/5, Soreness: '+entry.soreness+'/5 (1=very sore, 5=fresh), Mood: '+entry.mood+'/5, Hunger: '+entry.hunger+'/5.'+(notes?' Notes: '+notes:'')+' Analyze my data and adjust my macros or training if needed. Be direct.'),300);
   },800);
 }
 
@@ -1468,15 +1534,16 @@ function checkDeload(){
   const recent=S.checkinHistory.slice(-3);
   const avgE=recent.reduce((a,c)=>a+c.energy,0)/recent.length;
   const avgS=recent.reduce((a,c)=>a+c.sleep,0)/recent.length;
-  if(avgE<2.5||avgS<2.5){banner.style.display='block';}else{banner.style.display='none';}
+  const avgSore=recent.reduce((a,c)=>a+(c.soreness||3),0)/recent.length;
+  if(avgE<2.5||avgS<2.5||avgSore<2){banner.style.display='block';}else{banner.style.display='none';}
 }
 async function buildProgram(){
   const content=el('programContent');if(!content)return;
   content.innerHTML='<div style="text-align:center;padding:30px;"><div style="font-size:32px;margin-bottom:10px;">⚡</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--muted2);letter-spacing:1px;">BUILDING YOUR PROGRAM...</div></div>';
   const topPRs=Object.values(S.prs||{}).sort((a,b)=>b.weight-a.weight).slice(0,8).map(p=>p.name+': '+p.weight+'lbs').join(', ')||'No PRs yet';
-  const lastCI=S.lastCheckin?'Energy '+S.lastCheckin.energy+'/5, sleep '+S.lastCheckin.sleep+'/5':'No check-ins';
+  const lastCI=S.lastCheckin?'Energy '+S.lastCheckin.energy+'/5, sleep '+S.lastCheckin.sleep+'/5, soreness '+(S.lastCheckin.soreness||'?')+'/5, mood '+(S.lastCheckin.mood||'?')+'/5 (1-5 scale, 1=worst 5=best)':'No check-ins';
   const recent3=(S.checkinHistory||[]).slice(-3);
-  const needsDeload=recent3.length>=2&&(recent3.reduce((a,c)=>a+c.energy,0)/recent3.length<2.5);
+  const needsDeload=recent3.length>=2&&(recent3.reduce((a,c)=>a+c.energy,0)/recent3.length<2.5||recent3.reduce((a,c)=>a+(c.soreness||3),0)/recent3.length<2);
   const prompt='Build a 7-day weekly training program for Bryce Urbantke — 29yo male, PPL split, aesthetics + strength, also does Muay Thai. PRs: '+topPRs+'. '+lastCI+'. Level: '+S.level+'.'+(needsDeload?' BUILD A DELOAD WEEK — low energy detected.':'')+'\nRespond ONLY with valid JSON, no markdown:\n{"week":[{"type":"push","focus":"Chest & Shoulders","exercises":[{"name":"Incline Bench Press","sets":4,"reps":"6-8","weight":185,"note":"Drive for PR"},...]},...],"coachNote":"One sentence."}\ntype must be: push/pull/legs/muaythai/cardio/rest/full/deload. 7 days total. Use his actual PR numbers for weight targets.';
   if(!getApiKey()){promptApiKey();return;}
   try{
@@ -1811,7 +1878,7 @@ function drawerNav(tab){
 // ══════════════════════════
 const ALL_PANELS=['mobileMe','mobileLog','mobilePRs','mobileTrophies','mobileNutrition',
   'mobileProgram','mobileTimer','mobile1RM','mobileOverload','mobileMeals',
-  'mobileSupps','mobileBody','mobileExport'];
+  'mobileSupps','mobileBody','mobileExport','mobileWater'];
 
 function mobileTab(tab,btn){
   el('moreMenu')&&el('moreMenu').classList.remove('active');
@@ -1821,7 +1888,7 @@ function mobileTab(tab,btn){
   const panelMap={me:'mobileMe',log:'mobileLog',prs:'mobilePRs',trophies:'mobileTrophies',
     nutrition:'mobileNutrition',program:'mobileProgram',timer:'mobileTimer',
     '1rm':'mobile1RM',overload:'mobileOverload',meals:'mobileMeals',
-    supps:'mobileSupps',body:'mobileBody',export:'mobileExport'};
+    supps:'mobileSupps',body:'mobileBody',export:'mobileExport',water:'mobileWater'};
   if(tab==='chat')return;
   const panelId=panelMap[tab];
   if(panelId){const p=el(panelId);if(p)p.classList.add('active');}
@@ -1836,6 +1903,7 @@ function mobileTab(tab,btn){
   if(tab==='supps'){renderSupps();}
   if(tab==='body'){renderMeasurements();}
   if(tab==='trophies'){renderMobileAch();}
+  if(tab==='water'){renderWater();}
 }
 function toggleMoreMenu(btn){
   const menu=el('moreMenu');if(!menu)return;
@@ -1865,7 +1933,7 @@ function refreshMobileMe(){
   setStyle('mSr','width',Math.min(100,S.stats.rec)+'%');
   setEl('mStreakNum','textContent',S.streak);
   const mCW=el('mCharWrap');if(mCW){mCW.innerHTML='';mCW.appendChild(buildBryce(S.level));}
-  if(S.lastCheckin){const d=el('lastCheckinDisplay');if(d)d.textContent='Last: '+S.lastCheckin.date+' - '+S.lastCheckin.weight+'lbs';}
+  if(S.lastCheckin){const d=el('lastCheckinDisplay');if(d)d.textContent='Last: '+S.lastCheckin.date+' - '+S.lastCheckin.weight+'lbs E:'+S.lastCheckin.energy+' S:'+S.lastCheckin.sleep+' Sore:'+(S.lastCheckin.soreness||'?')+' Mood:'+(S.lastCheckin.mood||'?');}
 }
 function renderMobileLog(){
   const list=el('mLogList');const empty=el('mLogEmpty');if(!list||!empty)return;
@@ -1918,7 +1986,7 @@ renderOverload();
 renderMealPlan();
 renderMeasurements();
 getSuppState();
-if(S.lastCheckin){const d=el("lastCheckinDisplay");if(d)d.textContent="Last: "+S.lastCheckin.date+" - "+S.lastCheckin.weight+"lbs";}
+if(S.lastCheckin){const d=el("lastCheckinDisplay");if(d)d.textContent="Last: "+S.lastCheckin.date+" - "+S.lastCheckin.weight+"lbs E:"+S.lastCheckin.energy+" S:"+S.lastCheckin.sleep+" Sore:"+(S.lastCheckin.soreness||"?")+" Mood:"+(S.lastCheckin.mood||"?");}
 const lvlName=getLevelData(S.level).title;
 // Restore saved chat or show welcome
 if(chatHistory.length>0){
@@ -2024,12 +2092,16 @@ if(chatHistory.length>0){
       <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);" id="waterGoal">0 / 16 cups (1 gal)</div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--border);">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:10px;">WEEKLY CHECK-IN</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:4px;">DAILY CHECK-IN</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:10px;letter-spacing:0.5px;">1 = worst · 5 = best · +15 XP</div>
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:55px;letter-spacing:1px;">WEIGHT</span><input id="ciWeight" type="number" placeholder="lbs" class="field-input" style="flex:1;margin-bottom:0;padding:5px 9px;font-size:12px;"></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:55px;letter-spacing:1px;">ENERGY</span><div style="display:flex;gap:4px;flex:1;" id="ciEnergyBtns"><button onclick="setCheckinRating('energy',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('energy',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('energy',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('energy',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('energy',5)" class="rating-btn" data-val="5">5</button></div></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:55px;letter-spacing:1px;">SLEEP</span><div style="display:flex;gap:4px;flex:1;" id="ciSleepBtns"><button onclick="setCheckinRating('sleep',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('sleep',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('sleep',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('sleep',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('sleep',5)" class="rating-btn" data-val="5">5</button></div></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:55px;letter-spacing:1px;">HUNGER</span><div style="display:flex;gap:4px;flex:1;" id="ciHungerBtns"><button onclick="setCheckinRating('hunger',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('hunger',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('hunger',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('hunger',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('hunger',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">WEIGHT</span><input id="ciWeight" type="number" placeholder="lbs" class="field-input" style="flex:1;margin-bottom:0;padding:5px 9px;font-size:12px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">ENERGY</span><div style="display:flex;gap:4px;flex:1;" id="ciEnergyBtns"><button onclick="setCheckinRating('energy',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('energy',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('energy',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('energy',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('energy',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">SLEEP</span><div style="display:flex;gap:4px;flex:1;" id="ciSleepBtns"><button onclick="setCheckinRating('sleep',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('sleep',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('sleep',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('sleep',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('sleep',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">SORENESS</span><div style="display:flex;gap:4px;flex:1;" id="ciSorenessBtns"><button onclick="setCheckinRating('soreness',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('soreness',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('soreness',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('soreness',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('soreness',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">MOOD</span><div style="display:flex;gap:4px;flex:1;" id="ciMoodBtns"><button onclick="setCheckinRating('mood',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('mood',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('mood',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('mood',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('mood',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">HUNGER</span><div style="display:flex;gap:4px;flex:1;" id="ciHungerBtns"><button onclick="setCheckinRating('hunger',1)" class="rating-btn" data-val="1">1</button><button onclick="setCheckinRating('hunger',2)" class="rating-btn" data-val="2">2</button><button onclick="setCheckinRating('hunger',3)" class="rating-btn" data-val="3">3</button><button onclick="setCheckinRating('hunger',4)" class="rating-btn" data-val="4">4</button><button onclick="setCheckinRating('hunger',5)" class="rating-btn" data-val="5">5</button></div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);width:60px;letter-spacing:1px;">NOTES</span><input id="ciNotes" placeholder="How you feeling..." class="field-input" style="flex:1;margin-bottom:0;padding:5px 9px;font-size:12px;"></div>
       </div>
       <button onclick="submitCheckin()" style="width:100%;padding:9px;border-radius:8px;background:linear-gradient(135deg,var(--fire),var(--amber));border:none;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;cursor:pointer;">SUBMIT CHECK-IN</button>
       <div id="lastCheckinDisplay" style="margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);text-align:center;"></div>
@@ -2206,6 +2278,19 @@ if(chatHistory.length>0){
   <div class="mobile-panel-body"><div class="ach-grid" id="mAchGrid" style="padding:10px;"></div></div>
 </div>
 
+<!-- MOBILE: Water -->
+<div class="mobile-panel" id="mobileWater">
+  <div class="mobile-panel-header">WATER</div>
+  <div class="mobile-panel-body">
+    <div style="padding:20px 18px;text-align:center;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:3px;color:var(--blue);margin-bottom:4px;">HYDRATE OR DIE</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:16px;">+5 XP PER CUP · +15 BONUS FOR FULL GALLON</div>
+      <div class="water-cups" id="waterCups2" style="justify-content:center;"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-top:8px;" id="waterGoal2">0 / 16 cups (1 gal)</div>
+    </div>
+  </div>
+</div>
+
 <!-- MOBILE: Export -->
 <div class="mobile-panel" id="mobileExport">
   <div class="mobile-panel-header">EXPORT</div>
@@ -2235,6 +2320,7 @@ if(chatHistory.length>0){
     <div class="more-item" onclick="moreNav('prs')"><span class="more-item-icon">💪</span><span class="more-item-label">PRs</span></div>
     <div class="more-item" onclick="moreNav('overload')"><span class="more-item-icon">📈</span><span class="more-item-label">Next Session</span></div>
     <div class="more-item" onclick="moreNav('timer')"><span class="more-item-icon">⏱</span><span class="more-item-label">Timer</span></div>
+    <div class="more-item" onclick="moreNav('water')"><span class="more-item-icon">💧</span><span class="more-item-label">Water</span></div>
     <div class="more-item" onclick="moreNav('1rm')"><span class="more-item-icon">🧮</span><span class="more-item-label">1RM Calc</span></div>
     <div class="more-item" onclick="moreNav('meals')"><span class="more-item-icon">🍽️</span><span class="more-item-label">Meal Plan</span></div>
     <div class="more-item" onclick="moreNav('supps')"><span class="more-item-icon">💊</span><span class="more-item-label">Supplements</span></div>
