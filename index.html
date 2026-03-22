@@ -441,11 +441,13 @@ textarea::placeholder{color:var(--muted2);}
     <div class="modal-title">Log Session</div>
     <label class="field-label">Workout Type</label>
     <div class="wtype-grid" id="wtypeGrid"></div>
-    <label class="field-label">Top Lift (optional)</label>
-    <div style="display:flex;gap:6px;margin-bottom:12px;">
-      <input class="field-input" id="logLift" placeholder="Exercise" style="flex:2;margin-bottom:0;">
-      <input class="field-input" id="logLiftWeight" type="number" placeholder="lbs" style="flex:1;margin-bottom:0;">
-      <input class="field-input" id="logLiftReps" type="number" placeholder="reps" style="flex:1;margin-bottom:0;">
+    <div id="logDetailFields">
+      <label class="field-label">Top Lift (optional)</label>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <input class="field-input" id="logLift" placeholder="Exercise" style="flex:2;margin-bottom:0;">
+        <input class="field-input" id="logLiftWeight" type="number" placeholder="lbs" style="flex:1;margin-bottom:0;">
+        <input class="field-input" id="logLiftReps" type="number" placeholder="reps" style="flex:1;margin-bottom:0;">
+      </div>
     </div>
     <label class="field-label">Notes (optional)</label>
     <input class="field-input" id="logNotes" placeholder="How it felt...">
@@ -776,7 +778,10 @@ function renderLog() {
   empty.style.display='none';
   entries.forEach(e=>{
     const d=document.createElement('div'); d.className='log-entry';
-    const liftStr=e.lift?' <span style="color:var(--amber)">'+e.liftWeight+'lbs'+(e.liftReps?' x'+e.liftReps:'')+'</span>':'';d.innerHTML='<div class="log-dot"></div><div class="log-info"><div class="log-name">'+e.type+liftStr+'</div><div class="log-meta">'+e.date+(e.notes?' · '+e.notes.substring(0,20):'')+'</div></div><div class="log-xp">+'+e.xp+'xp</div>';
+    let detailStr='';
+    if(e.lift)detailStr=' <span style="color:var(--amber)">'+e.liftWeight+'lbs'+(e.liftReps?' x'+e.liftReps:'')+'</span>';
+    else if(e.duration)detailStr=' <span style="color:var(--amber)">'+e.duration+'min'+(e.cardioType?' '+e.cardioType:'')+(e.focus?' '+e.focus:'')+(e.distance?' · '+e.distance:'')+(e.rounds?' · '+e.rounds+'rds':'')+(e.routine?' · '+e.routine:'')+'</span>';
+    d.innerHTML='<div class="log-dot"></div><div class="log-info"><div class="log-name">'+e.type+detailStr+'</div><div class="log-meta">'+e.date+(e.notes?' · '+e.notes.substring(0,20):'')+'</div></div><div class="log-xp">+'+e.xp+'xp</div>';
     list.insertBefore(d,empty);
   });
 }
@@ -846,12 +851,67 @@ function nextAch(){
 // ══════════════════════════
 
 let selectedWT=null;
+function updateLogFields(wt){
+  const box=el('logDetailFields');if(!box)return;
+  const liftTypes=['push','pull','legs','full'];
+  if(liftTypes.includes(wt.id)){
+    box.innerHTML='<label class="field-label">Top Lift (optional)</label>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +'<input class="field-input" id="logLift" placeholder="Exercise" style="flex:2;margin-bottom:0;">'
+      +'<input class="field-input" id="logLiftWeight" type="number" placeholder="lbs" style="flex:1;margin-bottom:0;">'
+      +'<input class="field-input" id="logLiftReps" type="number" placeholder="reps" style="flex:1;margin-bottom:0;">'
+      +'</div>';
+  }else if(wt.id==='cardio'){
+    box.innerHTML='<label class="field-label">Details (optional)</label>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +'<input class="field-input" id="logDuration" type="number" placeholder="minutes" style="flex:1;margin-bottom:0;">'
+      +'<input class="field-input" id="logDistance" placeholder="distance (mi/km)" style="flex:1;margin-bottom:0;">'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="cardioTypeGrid"></div>';
+    setTimeout(()=>{
+      const grid=el('cardioTypeGrid');if(!grid)return;
+      ['Run','Bike','Row','Swim','Stairs','Walk','HIIT','Other'].forEach(t=>{
+        const btn=document.createElement('button');
+        btn.style.cssText='padding:6px 12px;border-radius:6px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:12px;cursor:pointer;';
+        btn.textContent=t;
+        btn.onclick=()=>{grid.querySelectorAll('button').forEach(b=>{b.style.borderColor='var(--border2)';b.style.color='var(--muted2)';});btn.style.borderColor='var(--fire)';btn.style.color='var(--fire2)';btn.dataset.selected='true';};
+        grid.appendChild(btn);
+      });
+    },0);
+  }else if(wt.id==='muaythai'){
+    box.innerHTML='<label class="field-label">Details (optional)</label>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +'<input class="field-input" id="logDuration" type="number" placeholder="minutes" style="flex:1;margin-bottom:0;">'
+      +'<input class="field-input" id="logRounds" type="number" placeholder="rounds" style="flex:1;margin-bottom:0;">'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="mtFocusGrid"></div>';
+    setTimeout(()=>{
+      const grid=el('mtFocusGrid');if(!grid)return;
+      ['Bagwork','Pads','Sparring','Clinch','Drills','Shadow','S&C'].forEach(t=>{
+        const btn=document.createElement('button');
+        btn.style.cssText='padding:6px 12px;border-radius:6px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:12px;cursor:pointer;';
+        btn.textContent=t;
+        btn.onclick=()=>{grid.querySelectorAll('button').forEach(b=>{b.style.borderColor='var(--border2)';b.style.color='var(--muted2)';});btn.style.borderColor='var(--fire)';btn.style.color='var(--fire2)';btn.dataset.selected='true';};
+        grid.appendChild(btn);
+      });
+    },0);
+  }else if(wt.id==='yoga'){
+    box.innerHTML='<label class="field-label">Details (optional)</label>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +'<input class="field-input" id="logDuration" type="number" placeholder="minutes" style="flex:1;margin-bottom:0;">'
+      +'<input class="field-input" id="logRoutine" placeholder="Routine name" style="flex:1;margin-bottom:0;">'
+      +'</div>';
+  }else{
+    box.innerHTML='';
+  }
+}
 function openModal(){
   selectedWT=null; document.getElementById('logNotes').value='';
+  const box=el('logDetailFields');if(box)box.innerHTML='';
   const g=document.getElementById('wtypeGrid'); g.innerHTML='';
   WORKOUT_TYPES.forEach(wt=>{
     const b=document.createElement('button'); b.className='wtype-btn'; b.textContent=wt.label;
-    b.onclick=()=>{document.querySelectorAll('.wtype-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedWT=wt;};
+    b.onclick=()=>{document.querySelectorAll('.wtype-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedWT=wt;updateLogFields(wt);};
     g.appendChild(b);
   });
   document.getElementById('modalOverlay').classList.add('open');
@@ -1123,9 +1183,6 @@ el('prModalOverlay')&&el('prModalOverlay').addEventListener('click',function(e){
 function saveLog(){
   if(!selectedWT)return;
   const notes=el('logNotes').value.trim();
-  const liftName=el('logLift')?el('logLift').value.trim():'';
-  const liftWeight=el('logLiftWeight')?parseFloat(el('logLiftWeight').value)||null:null;
-  const liftReps=el('logLiftReps')?parseInt(el('logLiftReps').value)||null:null;
   const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const yest=new Date();yest.setDate(yest.getDate()-1);
   const yStr=yest.toLocaleDateString('en-US',{month:'short',day:'numeric'});
@@ -1134,21 +1191,47 @@ function saveLog(){
   else S.streak=1;
   S.lastLogDate=today;S.total++;S.byType[selectedWT.id]=(S.byType[selectedWT.id]||0)+1;
   const entry={type:selectedWT.label,notes,date:today,xp:selectedWT.xp};
-  if(liftName&&liftWeight){entry.lift=liftName;entry.liftWeight=liftWeight;entry.liftReps=liftReps;}
-  S.log.push(entry);
-  if(liftName&&liftWeight){
-    const key=liftName.toLowerCase();
-    if(!S.prs[key]||liftWeight>S.prs[key].weight){
-      const isNew=!S.prs[key];
-      S.prs[key]={name:liftName,weight:liftWeight,reps:liftReps,date:today};
-      if(!isNew)setTimeout(()=>showAchToast('🔥','NEW PR!',liftName+': '+liftWeight+'lbs'),800);
+  
+  // Capture type-specific fields
+  const liftTypes=['push','pull','legs','full'];
+  if(liftTypes.includes(selectedWT.id)){
+    const liftName=el('logLift')?el('logLift').value.trim():'';
+    const liftWeight=el('logLiftWeight')?parseFloat(el('logLiftWeight').value)||null:null;
+    const liftReps=el('logLiftReps')?parseInt(el('logLiftReps').value)||null:null;
+    if(liftName&&liftWeight){
+      entry.lift=liftName;entry.liftWeight=liftWeight;entry.liftReps=liftReps;
+      const key=liftName.toLowerCase();
+      if(!S.prs[key]||liftWeight>S.prs[key].weight){
+        const isNew=!S.prs[key];
+        S.prs[key]={name:liftName,weight:liftWeight,reps:liftReps,date:today};
+        if(!isNew)setTimeout(()=>showAchToast('🔥','NEW PR!',liftName+': '+liftWeight+'lbs'),800);
+      }
     }
+  }else if(selectedWT.id==='cardio'){
+    const dur=el('logDuration')?parseInt(el('logDuration').value)||null:null;
+    const dist=el('logDistance')?el('logDistance').value.trim():'';
+    const typeBtn=document.querySelector('#cardioTypeGrid button[data-selected="true"]');
+    const cardioType=typeBtn?typeBtn.textContent:'';
+    if(dur)entry.duration=dur;
+    if(dist)entry.distance=dist;
+    if(cardioType)entry.cardioType=cardioType;
+  }else if(selectedWT.id==='muaythai'){
+    const dur=el('logDuration')?parseInt(el('logDuration').value)||null:null;
+    const rounds=el('logRounds')?parseInt(el('logRounds').value)||null:null;
+    const focusBtn=document.querySelector('#mtFocusGrid button[data-selected="true"]');
+    const focus=focusBtn?focusBtn.textContent:'';
+    if(dur)entry.duration=dur;
+    if(rounds)entry.rounds=rounds;
+    if(focus)entry.focus=focus;
+  }else if(selectedWT.id==='yoga'){
+    const dur=el('logDuration')?parseInt(el('logDuration').value)||null:null;
+    const routine=el('logRoutine')?el('logRoutine').value.trim():'';
+    if(dur)entry.duration=dur;
+    if(routine)entry.routine=routine;
   }
-  if(el('logLift'))el('logLift').value='';
-  if(el('logLiftWeight'))el('logLiftWeight').value='';
-  if(el('logLiftReps'))el('logLiftReps').value='';
+  
+  S.log.push(entry);
   awardXP(selectedWT.xp,selectedWT.stat);closeModal();
-  // Refresh Today if visible
   const tp=el('mobileToday');if(tp&&tp.classList.contains('active'))setTimeout(renderToday,300);
 }
 
@@ -2357,8 +2440,10 @@ function renderMobileLog(){
   empty.style.display='none';
   entries.forEach(e=>{
     const d=document.createElement('div');d.className='log-entry';
-    const liftStr=e.lift?'<span style="color:var(--amber)"> '+e.liftWeight+'lbs'+(e.liftReps?' x'+e.liftReps:'')+'</span>':'';
-    d.innerHTML='<div class="log-dot"></div><div class="log-info"><div class="log-name">'+e.type+liftStr+'</div><div class="log-meta">'+e.date+(e.notes?' · '+e.notes.substring(0,20):'')+'</div></div><div class="log-xp">+'+e.xp+'xp</div>';
+    let detailStr='';
+    if(e.lift)detailStr='<span style="color:var(--amber)"> '+e.liftWeight+'lbs'+(e.liftReps?' x'+e.liftReps:'')+'</span>';
+    else if(e.duration)detailStr='<span style="color:var(--amber)"> '+e.duration+'min'+(e.cardioType?' '+e.cardioType:'')+(e.focus?' '+e.focus:'')+(e.distance?' · '+e.distance:'')+(e.rounds?' · '+e.rounds+'rds':'')+(e.routine?' · '+e.routine:'')+'</span>';
+    d.innerHTML='<div class="log-dot"></div><div class="log-info"><div class="log-name">'+e.type+detailStr+'</div><div class="log-meta">'+e.date+(e.notes?' · '+e.notes.substring(0,20):'')+'</div></div><div class="log-xp">+'+e.xp+'xp</div>';
     list.insertBefore(d,empty);
   });
 }
