@@ -224,21 +224,18 @@ textarea::placeholder{color:var(--muted2);}
   .chat{padding:10px 12px;gap:10px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .bubble{font-size:13px;padding:10px 12px;}
   .input-zone{padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--s1);}.input-hint{display:none;}
-  .mobile-nav{display:flex;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
-  .mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 6px;background:transparent;border:none;color:var(--muted2);font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.5px;cursor:pointer;transition:color 0.15s;gap:3px;}
-  .mobile-nav-btn.active{color:var(--fire2);}
-  .mobile-nav-btn .nav-icon{font-size:19px;line-height:1;}
-  .mobile-panel{position:fixed;top:0;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom));background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
+  .mobile-nav{display:none !important;}
+  .mobile-panel{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
   .mobile-panel.active{display:flex;}
   .mobile-panel-header{padding:14px 18px 10px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
   .panel-back{width:32px;height:32px;border-radius:7px;background:var(--s2);border:1px solid var(--border2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;transition:all 0.15s;}
   .panel-back:hover{border-color:var(--fire);color:var(--fire2);}
-  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom);}
   .modal{width:95vw;padding:16px;}.wtype-grid{grid-template-columns:repeat(3,1fr);}
   .lu-box{padding:22px 18px;}.lu-level{font-size:60px;}.lu-title{font-size:30px;}
-  .more-menu{bottom:calc(57px + env(safe-area-inset-bottom));}
+  .more-menu{bottom:0;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .drawer{padding-top:env(safe-area-inset-top);}
-  .ach-toast{bottom:calc(70px + env(safe-area-inset-bottom));right:12px;left:12px;min-width:auto;}
+  .ach-toast{bottom:calc(20px + env(safe-area-inset-bottom));right:12px;left:12px;min-width:auto;}
 }
 @media(min-width:769px){.mobile-nav{display:none!important;}.mobile-panel{display:none!important;}.drawer{display:none!important;}.drawer-overlay{display:none!important;}.hamburger{display:none!important;}}
 /* ══ MORE MENU ══ */
@@ -260,7 +257,7 @@ textarea::placeholder{color:var(--muted2);}
 /* ══ 1RM ══ */
 .calc-result{background:var(--s2);border-radius:10px;padding:14px;margin-top:12px;display:none;}.calc-result.show{display:block;}.calc-result-main{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:40px;color:var(--amber);line-height:1;}.calc-pct-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;}.calc-pct-item{background:var(--s3);border-radius:6px;padding:6px;text-align:center;}.calc-pct-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;}.calc-pct-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted2);}
 /* ══ WATER ══ */
-.water-wrap{padding:12px 18px;border-bottom:1px solid var(--border);}.water-cups{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px;}.water-cup{width:28px;height:28px;border-radius:6px;border:2px solid var(--border2);background:var(--s2);cursor:pointer;font-size:13px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}.water-cup.filled{background:rgba(74,158,255,0.2);border-color:var(--blue);}
+.water-wrap{padding:12px 18px;border-bottom:1px solid var(--border);}
 /* ══ CHECKIN ══ */
 .rating-btn{flex:1;padding:5px 2px;border-radius:5px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.15s;}.rating-btn.selected{background:var(--fire);border-color:var(--fire);color:white;}
 /* ══ MEASURE ══ */
@@ -712,7 +709,7 @@ const ACHIEVEMENTS = [
   // FEED THE MACHINE
   {id:'macro1',   icon:'🥩', name:'FED',                desc:'Log food for the first time',  check:s=>{const t=new Date().toLocaleDateString('en-US');return s.nutrition&&s.nutrition[t]&&s.nutrition[t].foods&&s.nutrition[t].foods.length>=1;}},
   {id:'checkin1', icon:'📋', name:'ACCOUNTABLE',        desc:'Complete a check-in',          check:s=>s.lastCheckin!==null},
-  {id:'hydrated', icon:'💧', name:'HYDRATED',           desc:'Hit a full gallon of water',   check:s=>{const t=new Date().toLocaleDateString('en-US');return s.water&&s.water[t]>=16;}},
+  {id:'hydrated', icon:'💧', name:'HYDRATED',           desc:'Hit a full gallon of water',   check:s=>{const t=new Date().toLocaleDateString('en-US');return s.water&&s.water[t]>=128;}},
   {id:'protein',  icon:'🥩', name:'PROTEIN MACHINE',    desc:'Hit your daily protein target', check:s=>{const t=new Date().toLocaleDateString('en-US');const mt=s.macroTargets||{protein:200};return s.nutrition&&s.nutrition[t]&&s.nutrition[t].protein>=mt.protein;}},
   // LEGACY
   {id:'pumping',  icon:'🏋', name:'VOLUME DEALER',      desc:'20 combined push + pull days', check:s=>((s.byType.push||0)+(s.byType.pull||0))>=20},
@@ -1494,64 +1491,78 @@ async function lookupBarcode(barcode){
 //  WATER TRACKER
 // ══════════════════════════
 function getWaterToday(){const today=new Date().toLocaleDateString('en-US');if(!S.water)S.water={};if(!S.water[today])S.water[today]=0;return today;}
-function renderWater(){
-  const cups=el('waterCups');const goal=el('waterGoal');if(!cups)return;
-  const today=getWaterToday();const count=S.water[today]||0;
-  cups.innerHTML='';
-  for(let i=1;i<=16;i++){
-    const btn=document.createElement('button');
-    btn.className='water-cup'+(i<=count?' filled':'');
-    btn.textContent='💧';
-    btn.onclick=()=>{
-      const prev=S.water[today]||0;
-      const newCount=i<=prev?i-1:i;
-      S.water[today]=newCount;
-      saveState();renderWater();
-      // Award XP for adding cups (not removing)
-      if(newCount>prev){
-        awardXP(5,{rec:1});
-        if(newCount>=16){
-          if(!S.waterXpDays)S.waterXpDays={};
-          if(!S.waterXpDays[today]){
-            S.waterXpDays[today]=true;
-            awardXP(15,{rec:2});
-            showAchToast('💧','GALLON DOWN +15xp','Full gallon today');
-          }
-        }
-      }
-    };
-    cups.appendChild(btn);
-  }
-  if(goal)goal.textContent=count+' / 16 cups (1 gal)';
-  // Also update standalone water panel if it exists
-  const cups2=el('waterCups2');const goal2=el('waterGoal2');
-  if(cups2){
-    cups2.innerHTML='';
-    for(let i=1;i<=16;i++){
-      const btn2=document.createElement('button');
-      btn2.className='water-cup'+(i<=count?' filled':'');
-      btn2.textContent='💧';
-      btn2.onclick=()=>{
-        const prev2=S.water[today]||0;
-        const newCount2=i<=prev2?i-1:i;
-        S.water[today]=newCount2;
-        saveState();renderWater();
-        if(newCount2>prev2){
-          awardXP(5,{rec:1});
-          if(newCount2>=16){
-            if(!S.waterXpDays)S.waterXpDays={};
-            if(!S.waterXpDays[today]){
-              S.waterXpDays[today]=true;
-              awardXP(15,{rec:2});
-              showAchToast('💧','GALLON DOWN +15xp','Full gallon today');
-            }
-          }
-        }
-      };
-      cups2.appendChild(btn2);
+function addWater(oz){
+  const today=getWaterToday();
+  const prev=S.water[today]||0;
+  S.water[today]=prev+oz;
+  // +3 XP per 8oz
+  const xp=Math.round(oz/8)*3;
+  if(xp>0)awardXP(xp,{rec:1});
+  // Gallon bonus (128oz) once per day
+  if(S.water[today]>=128&&prev<128){
+    if(!S.waterXpDays)S.waterXpDays={};
+    if(!S.waterXpDays[today]){
+      S.waterXpDays[today]=true;
+      awardXP(15,{rec:2});
+      showAchToast('💧','GALLON DOWN +15xp','128oz today');
     }
   }
-  if(goal2)goal2.textContent=count+' / 16 cups (1 gal)';
+  saveState();renderWater();
+}
+function subtractWater(oz){
+  const today=getWaterToday();
+  S.water[today]=Math.max(0,(S.water[today]||0)-oz);
+  saveState();renderWater();
+}
+function addManualWater(){
+  const inp=el('waterManualInput');
+  if(!inp)return;
+  const oz=parseInt(inp.value)||0;
+  if(oz<=0)return;
+  addWater(oz);
+  inp.value='';
+}
+function renderWater(){
+  const today=getWaterToday();
+  const count=S.water[today]||0;
+  const pct=Math.min(100,Math.round(count/128*100));
+  const bs="padding:8px;border-radius:7px;background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;cursor:pointer;";
+  const bb="padding:10px;border-radius:8px;background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;";
+  const ms="padding:7px;border-radius:7px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;cursor:pointer;";
+  // Me panel water
+  const wrap=el('waterCups');const goal=el('waterGoal');
+  if(wrap){
+    wrap.innerHTML='<div style="display:flex;gap:5px;margin-bottom:6px;">'
+      +'<button onclick="addWater(8)" style="flex:1;'+bs+'">+8</button>'
+      +'<button onclick="addWater(12)" style="flex:1;'+bs+'">+12</button>'
+      +'<button onclick="addWater(16)" style="flex:1;'+bs+'">+16</button>'
+      +'<button onclick="addWater(32)" style="flex:1;'+bs+'">+32</button>'
+      +'<button onclick="subtractWater(8)" style="width:36px;'+bs+'color:var(--muted2);">-</button>'
+      +'</div>'
+      +'<div style="height:8px;background:var(--s3);border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--blue),#6ac4ff);border-radius:4px;transition:width 0.4s;"></div></div>';
+  }
+  if(goal)goal.textContent=count+'oz / 128oz (1 gal)';
+  // Standalone water panel
+  const wrap2=el('waterCups2');const goal2=el('waterGoal2');
+  if(wrap2){
+    wrap2.innerHTML='<div style="display:flex;gap:8px;margin-bottom:8px;">'
+      +'<button onclick="addWater(8)" style="flex:1;'+bb+'">+8oz</button>'
+      +'<button onclick="addWater(12)" style="flex:1;'+bb+'">+12oz</button>'
+      +'<button onclick="addWater(16)" style="flex:1;'+bb+'">+16oz</button>'
+      +'<button onclick="addWater(32)" style="flex:1;'+bb+'">+32oz</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:8px;">'
+      +'<button onclick="subtractWater(8)" style="flex:1;'+ms+'">-8oz</button>'
+      +'<button onclick="subtractWater(12)" style="flex:1;'+ms+'">-12oz</button>'
+      +'<button onclick="subtractWater(16)" style="flex:1;'+ms+'">-16oz</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +"<input type=\"number\" id=\"waterManualInput\" placeholder=\"Custom oz\" style=\"flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:8px 10px;font-family:'Barlow',sans-serif;font-size:13px;color:var(--text);outline:none;text-align:center;\">"
+      +"<button onclick=\"addManualWater()\" style=\"padding:8px 14px;border-radius:7px;background:var(--fire);border:none;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;cursor:pointer;\">ADD</button>"
+      +'</div>'
+      +'<div style="position:relative;height:14px;background:var(--s3);border-radius:7px;overflow:hidden;margin-bottom:6px;"><div style="height:100%;width:'+pct+"%;background:linear-gradient(90deg,var(--blue),#6ac4ff);border-radius:7px;transition:width 0.4s;\"></div><div style=\"position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.5);\">"+pct+'%</div></div>';
+  }
+  if(goal2)goal2.textContent=count+'oz / 128oz (1 gal)';
 }
 
 // ══════════════════════════
@@ -1853,12 +1864,44 @@ function renderToday(){
   body.innerHTML='';
   const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const dayOfWeek=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const pName=getProfileName()||'Lifter';
+  const lvlData=getLevelData(S.level);
+  const prevXP=S.level>1?getLevelData(S.level-1).xp:0;
+  const range=lvlData.xp-prevXP;
+  const pct=range>0?Math.min(100,Math.round(((S.xp-prevXP)/range)*100)):0;
   
-  // Header
+  // Character header
   const header=document.createElement('div');
-  header.style.cssText='padding:16px 18px;border-bottom:1px solid var(--border);';
-  header.innerHTML='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:24px;letter-spacing:3px;">'+dayOfWeek.toUpperCase()+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--muted2);margin-top:2px;">'+today+' · Level '+S.level+' · '+S.streak+' day streak 🔥</div>';
+  header.style.cssText='padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;';
+  const charDiv=document.createElement('div');
+  charDiv.style.cssText='width:80px;height:85px;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+  const charEl=buildBryce(S.level);
+  charEl.querySelector('canvas').style.width='76px';
+  charEl.querySelector('canvas').style.height='81px';
+  charDiv.appendChild(charEl);
+  header.appendChild(charDiv);
+  
+  const info=document.createElement('div');
+  info.style.cssText='flex:1;min-width:0;';
+  info.innerHTML='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;">'+pName.toUpperCase()+'</div>'
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--fire2);letter-spacing:1px;margin-top:1px;">'+lvlData.title+'</div>'
+    +'<div style="display:flex;align-items:baseline;gap:5px;margin-top:6px;">'
+    +'<span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:28px;line-height:1;color:var(--amber);">'+S.level+'</span>'
+    +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);">LVL</span>'
+    +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--muted2);margin-left:auto;">'+S.streak+' 🔥</span>'
+    +'</div>'
+    +'<div style="margin-top:6px;">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;color:var(--muted2);">XP</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:8px;color:var(--muted2);">'+S.xp+' / '+lvlData.xp+'</span></div>'
+    +'<div style="height:5px;background:var(--s3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--fire),var(--amber));border-radius:3px;"></div></div>'
+    +'</div>';
+  header.appendChild(info);
   body.appendChild(header);
+  
+  // Day label
+  const dayLabel=document.createElement('div');
+  dayLabel.style.cssText='padding:10px 18px;font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:14px;letter-spacing:2px;color:var(--muted2);border-bottom:1px solid var(--border);';
+  dayLabel.textContent=dayOfWeek.toUpperCase()+' · '+today;
+  body.appendChild(dayLabel);
   
   // Today's workout from program
   const prog=getProgramState();
@@ -1894,7 +1937,7 @@ function renderToday(){
   
   const stats=document.createElement('div');stats.className='today-card';stats.style.marginTop='10px';
   stats.innerHTML='<div class="today-card-header"><div class="today-card-title">TODAY\'S PROGRESS</div></div>'
-    +'<div class="today-stat"><div class="today-stat-icon">💧</div><div class="today-stat-label">Water</div><div class="today-stat-val">'+waterToday+'/16</div></div>'
+    +'<div class="today-stat"><div class="today-stat-icon">💧</div><div class="today-stat-label">Water</div><div class="today-stat-val">'+waterToday+'oz/128</div></div>'
     +'<div class="today-stat"><div class="today-stat-icon">🥩</div><div class="today-stat-label">Protein</div><div class="today-stat-val">'+Math.round(nt.protein)+'/'+mt.protein+'g</div></div>'
     +'<div class="today-stat"><div class="today-stat-icon">🔥</div><div class="today-stat-label">Calories</div><div class="today-stat-val">'+kcal+' kcal</div></div>'
     +'<div class="today-stat"><div class="today-stat-icon">📋</div><div class="today-stat-label">Check-in</div><div class="today-stat-val" style="color:'+(checkedIn?'var(--green)':'var(--muted2)')+';">'+(checkedIn?'Done':'Not yet')+'</div></div>';
@@ -2262,19 +2305,13 @@ function closeDrawer(){
 }
 function drawerNav(tab){
   closeDrawer();
-  // Update drawer active state
   document.querySelectorAll('.drawer-item').forEach(d=>d.classList.remove('active'));
   event.target.closest('.drawer-item').classList.add('active');
-  // Route to the right panel
   if(tab==='chat'){
-    mobileTab('chat',el('mNavChat'));
+    // Close all panels to show chat underneath
+    ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
   }else{
     mobileTab(tab,null);
-    // Also update bottom nav active states
-    document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
-    const navMap={me:'mNavMe',program:'mNavProgram',nutrition:'mNavNutrition'};
-    if(navMap[tab]){const nb=el(navMap[tab]);if(nb)nb.classList.add('active');}
-    else{const nb=el('mNavMore');if(nb)nb.classList.add('active');}
   }
 }
 
@@ -2348,13 +2385,11 @@ const ALL_PANELS=['mobileMe','mobileLog','mobilePRs','mobileTrophies','mobileNut
 function mobileTab(tab,btn){
   el('moreMenu')&&el('moreMenu').classList.remove('active');
   ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
-  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+  if(tab==='chat')return;
   const panelMap={me:'mobileMe',log:'mobileLog',prs:'mobilePRs',trophies:'mobileTrophies',
     nutrition:'mobileNutrition',program:'mobileProgram',timer:'mobileTimer',
     '1rm':'mobile1RM',overload:'mobileOverload',meals:'mobileMeals',
     supps:'mobileSupps',body:'mobileBody',export:'mobileExport',water:'mobileWater',today:'mobileToday',workout:'mobileWorkout',workouts:'mobileWorkouts'};
-  if(tab==='chat')return;
   const panelId=panelMap[tab];
   if(panelId){const p=el(panelId);if(p)p.classList.add('active');}
   if(tab==='me'){refreshMobileMe();}
@@ -2435,11 +2470,13 @@ refreshUI=function(){__orig();refreshMobileMe&&refreshMobileMe();renderMobileLog
 function backToChat(){
   ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
   el('moreMenu')&&el('moreMenu').classList.remove('active');
-  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
-  const chatBtn=el('mNavChat');if(chatBtn)chatBtn.classList.add('active');
-  // Reset drawer active state
+  // On mobile go to Today, on desktop just close panels
+  if(window.innerWidth<=768){
+    const tp=el('mobileToday');if(tp)tp.classList.add('active');
+    renderToday();
+  }
   document.querySelectorAll('.drawer-item').forEach(d=>d.classList.remove('active'));
-  const chatDrawerItem=document.querySelector('.drawer-item');if(chatDrawerItem)chatDrawerItem.classList.add('active');
+  const firstItem=document.querySelector('.drawer-item');if(firstItem)firstItem.classList.add('active');
 }
 
 // INIT
@@ -2477,11 +2514,19 @@ if(chatHistory.length>0){
     if(todayProgram.focus)todayMsg+=` — ${todayProgram.focus}`;
     todayMsg+=`</p>`;
   }
-  todayMsg+=`<p>💧 ${waterCount}/16 cups · 🥩 ${Math.round(todayNutrition.protein)}/${mt.protein}g protein</p>`;
+  todayMsg+=`<p>💧 ${waterCount}oz/128oz · 🥩 ${Math.round(todayNutrition.protein)}/${mt.protein}g protein</p>`;
   todayMsg+=`<p>Let's work, ${pName}.</p>`;
   addMsg('ai',todayMsg);
 }else{
   addMsg('ai',`<h3>Welcome, ${pName}.</h3><p>You're <strong>Level ${S.level} — ${lvlName}</strong>.</p><p>To activate the AI coach — tap <strong>☰</strong> → <strong>🔑 API Key</strong>.</p><p>Everything else works without it.</p>`);
+}
+// On mobile, auto-show Today panel on load
+if(window.innerWidth<=768){
+  setTimeout(()=>{
+    ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
+    const tp=el('mobileToday');if(tp)tp.classList.add('active');
+    renderToday();
+  },100);
 }
 </script>
 
@@ -2614,8 +2659,8 @@ if(chatHistory.length>0){
     </div>
     <div class="water-wrap">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:8px;">WATER TODAY</div>
-      <div class="water-cups" id="waterCups"></div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);" id="waterGoal">0 / 16 cups (1 gal)</div>
+      <div id="waterCups"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);margin-top:4px;" id="waterGoal">0oz / 128oz (1 gal)</div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--border);">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--muted2);margin-bottom:4px;">DAILY CHECK-IN</div>
@@ -2810,9 +2855,9 @@ if(chatHistory.length>0){
   <div class="mobile-panel-body">
     <div style="padding:20px 18px;text-align:center;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:3px;color:var(--blue);margin-bottom:4px;">HYDRATE OR DIE</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:16px;">+5 XP PER CUP · +15 BONUS FOR FULL GALLON</div>
-      <div class="water-cups" id="waterCups2" style="justify-content:center;"></div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-top:8px;" id="waterGoal2">0 / 16 cups (1 gal)</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:16px;">+3 XP PER 8oz · +15 BONUS FOR FULL GALLON</div>
+      <div id="waterCups2"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-top:8px;" id="waterGoal2">0oz / 128oz (1 gal)</div>
     </div>
   </div>
 </div>
@@ -2831,8 +2876,8 @@ if(chatHistory.length>0){
 
 <!-- BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
-  <button class="mobile-nav-btn active" onclick="mobileTab('chat',this)" id="mNavChat"><span class="nav-icon">💬</span><span>Chat</span></button>
-  <button class="mobile-nav-btn" onclick="mobileTab('me',this)" id="mNavMe"><span class="nav-icon">👤</span><span>Me</span></button>
+  <button class="mobile-nav-btn active" onclick="mobileTab('today',this)" id="mNavToday"><span class="nav-icon">🏠</span><span>Today</span></button>
+  <button class="mobile-nav-btn" onclick="mobileTab('chat',this)" id="mNavChat"><span class="nav-icon">💬</span><span>Chat</span></button>
   <button class="mobile-nav-btn" onclick="mobileTab('program',this)" id="mNavProgram"><span class="nav-icon">📅</span><span>Program</span></button>
   <button class="mobile-nav-btn" onclick="mobileTab('nutrition',this)" id="mNavNutrition"><span class="nav-icon">🥩</span><span>Macros</span></button>
   <button class="mobile-nav-btn" onclick="toggleMoreMenu(this)" id="mNavMore"><span class="nav-icon">⋯</span><span>More</span></button>
