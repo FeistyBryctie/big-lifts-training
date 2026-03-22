@@ -1033,6 +1033,9 @@ async function send(){
       let r=data.content[0].text;
       const macroMatch=r.match(/\{"action":"update_macros"[^}]+\}/);
       if(macroMatch){try{const cmd=JSON.parse(macroMatch[0]);if(cmd.protein&&cmd.carbs&&cmd.fats){S.macroTargets={protein:parseInt(cmd.protein),carbs:parseInt(cmd.carbs),fats:parseInt(cmd.fats)};MACRO_TARGETS.protein=parseInt(cmd.protein);MACRO_TARGETS.carbs=parseInt(cmd.carbs);MACRO_TARGETS.fats=parseInt(cmd.fats);saveState();renderMacros();r=r.replace(macroMatch[0],'').trim();setTimeout(()=>showAchToast('🎯','MACROS UPDATED','P:'+cmd.protein+'g C:'+cmd.carbs+'g F:'+cmd.fats+'g'),600);}}catch(e){}}
+      // Detect food logging commands from coach
+      const foodMatches=r.match(/\{"action":"log_food"[^}]+\}/g);
+      if(foodMatches){foodMatches.forEach(fm=>{try{const cmd=JSON.parse(fm);if(cmd.name&&(cmd.protein||cmd.carbs||cmd.fats)){addFoodToLog(cmd.name,parseFloat(cmd.protein)||0,parseFloat(cmd.carbs)||0,parseFloat(cmd.fats)||0);r=r.replace(fm,'').trim();}}catch(e){}});}
       chatHistory.push({role:'assistant',content:r});saveChatHistory();addMsg('ai',r);}
     else throw new Error();
   }catch(err){hideTyping();document.getElementById('errMsg').textContent='Connection error — check your internet and try again.';document.getElementById('errMsg').classList.add('show');chatHistory.pop();}
@@ -1139,7 +1142,7 @@ function getLiveContext(){
   const mt=S.macroTargets||{protein:200,carbs:250,fats:70};
   const prog=S.program&&S.program.week;
   const progSummary=prog?'Current program: '+prog.map((d,i)=>DAYS_OF_WEEK[i].substring(0,3)+':'+d.type).join(', '):'No program built yet';
-  return '\n\n--- LIVE DATA ---\nLevel: '+S.level+' | Streak: '+S.streak+' days\nRecent: '+recentLog+'\nPRs: '+topPRs+'\nToday macros: '+Math.round(n.protein)+'g P / '+Math.round(n.carbs)+'g C / '+Math.round(n.fats)+'g F = '+kcal+' kcal\nTargets: '+mt.protein+'g P / '+mt.carbs+'g C / '+mt.fats+'g F\n'+lastCI+'\n'+progSummary+'\n---\nIf asked to adjust macros, include this JSON anywhere in response: {"action":"update_macros","protein":X,"carbs":X,"fats":X}';
+  return '\n\n--- LIVE DATA ---\nLevel: '+S.level+' | Streak: '+S.streak+' days\nRecent: '+recentLog+'\nPRs: '+topPRs+'\nToday macros: '+Math.round(n.protein)+'g P / '+Math.round(n.carbs)+'g C / '+Math.round(n.fats)+'g F = '+kcal+' kcal\nTargets: '+mt.protein+'g P / '+mt.carbs+'g C / '+mt.fats+'g F\n'+lastCI+'\n'+progSummary+'\n---\nIf asked to adjust macros, include this JSON anywhere in response: {"action":"update_macros","protein":X,"carbs":X,"fats":X}\nWhen you estimate macros for a meal or food the user tells you about, ALWAYS log it automatically by including this JSON in your response (one per food item): {"action":"log_food","name":"Food Name","protein":X,"carbs":X,"fats":X} — this adds it directly to their macro tracker. Do this any time you break down a meal, analyze a photo of food, or the user tells you what they ate.';
 }
 
 // ══════════════════════════
