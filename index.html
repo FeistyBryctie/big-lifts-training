@@ -209,7 +209,7 @@ textarea::placeholder{color:var(--muted2);}
 .drawer-item-icon{font-size:18px;width:24px;text-align:center;}
 
 /* ══ MOBILE ══ */
-.mobile-nav{display:none;}.mobile-panel{display:none;}
+.mobile-panel{display:none;}
 @media(max-width:768px){
   html,body{overflow:hidden;position:fixed;width:100%;height:100%;}
   .sidebar{display:none;}
@@ -224,7 +224,6 @@ textarea::placeholder{color:var(--muted2);}
   .chat{padding:10px 12px;gap:10px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
   .bubble{font-size:13px;padding:10px 12px;}
   .input-zone{padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:var(--s1);}.input-hint{display:none;}
-  .mobile-nav{display:none !important;}
   .mobile-panel{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:50;flex-direction:column;overflow:hidden;}
   .mobile-panel.active{display:flex;}
   .mobile-panel-header{padding:14px 18px 10px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
@@ -233,19 +232,10 @@ textarea::placeholder{color:var(--muted2);}
   .mobile-panel-body{flex:1;overflow-y:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom);}
   .modal{width:95vw;padding:16px;}.wtype-grid{grid-template-columns:repeat(3,1fr);}
   .lu-box{padding:22px 18px;}.lu-level{font-size:60px;}.lu-title{font-size:30px;}
-  .more-menu{bottom:0;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .drawer{padding-top:env(safe-area-inset-top);}
   .ach-toast{bottom:calc(20px + env(safe-area-inset-bottom));right:12px;left:12px;min-width:auto;}
 }
-@media(min-width:769px){.mobile-nav{display:none!important;}.mobile-panel{display:none!important;}.drawer{display:none!important;}.drawer-overlay{display:none!important;}.hamburger{display:none!important;}}
-/* ══ MORE MENU ══ */
-.more-menu{position:fixed;bottom:57px;left:0;right:0;background:var(--s1);border-top:1px solid var(--border);z-index:80;display:none;padding:12px 16px 16px;}
-.more-menu.active{display:block;}
-.more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
-.more-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:11px 4px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;cursor:pointer;gap:4px;transition:all 0.15s;}
-.more-item:hover{border-color:var(--fire);}
-.more-item-icon{font-size:20px;line-height:1;}
-.more-item-label{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted2);text-align:center;}
+@media(min-width:769px){.mobile-panel{display:none!important;}.drawer{display:none!important;}.drawer-overlay{display:none!important;}.hamburger{display:none!important;}}
 /* ══ MACRO CHART ══ */
 .macro-chart-wrap{padding:14px 18px;border-bottom:1px solid var(--border);}.macro-chart-row{display:flex;align-items:center;gap:14px;}.macro-pie-wrap{position:relative;flex-shrink:0;}.macro-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}.macro-pie-kcal{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--text);line-height:1;}.macro-pie-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted2);letter-spacing:1px;}.macro-stats{flex:1;display:flex;flex-direction:column;gap:7px;}.macro-stat-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}.macro-stat-name{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted2);}.macro-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;}.macro-bar{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;}.macro-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
 /* ══ FOOD SEARCH ══ */
@@ -301,8 +291,8 @@ textarea::placeholder{color:var(--muted2);}
   <div class="drawer-nav">
     <div class="drawer-section">
       <div class="drawer-section-label">NAVIGATE</div>
-      <div class="drawer-item active" onclick="drawerNav('chat')"><span class="drawer-item-icon">💬</span>Chat</div>
-      <div class="drawer-item" onclick="drawerNav('today')"><span class="drawer-item-icon">📆</span>Today</div>
+      <div class="drawer-item active" onclick="drawerNav('today')"><span class="drawer-item-icon">🏠</span>Today</div>
+      <div class="drawer-item" onclick="drawerNav('chat')"><span class="drawer-item-icon">💬</span>Chat</div>
       <div class="drawer-item" onclick="drawerNav('me')"><span class="drawer-item-icon">👤</span>Me / Check-In</div>
       <div class="drawer-item" onclick="drawerNav('program')"><span class="drawer-item-icon">📅</span>Program</div>
       <div class="drawer-item" onclick="drawerNav('workouts')"><span class="drawer-item-icon">🏋</span>My Workouts</div>
@@ -328,7 +318,6 @@ textarea::placeholder{color:var(--muted2);}
     <div class="drawer-section">
       <div class="drawer-section-label">SETTINGS</div>
       <div class="drawer-item" onclick="closeDrawer();promptApiKey()"><span class="drawer-item-icon">🔑</span>API Key</div>
-      <div class="drawer-item" onclick="closeDrawer();openProfileModal()"><span class="drawer-item-icon">👥</span>Profiles</div>
       <div class="drawer-item" onclick="closeDrawer();clearChat()"><span class="drawer-item-icon">🗑</span>Clear Chat</div>
     </div>
   </div>
@@ -719,109 +708,27 @@ const ACHIEVEMENTS = [
 ];
 
 // ══════════════════════════
-//  PROFILES
+//  USER IDENTITY
 // ══════════════════════════
-function getProfiles(){try{return JSON.parse(localStorage.getItem('blt_profiles')||'[]');}catch{return [];}}
-function saveProfiles(p){localStorage.setItem('blt_profiles',JSON.stringify(p));}
 function getActiveProfileId(){return localStorage.getItem('blt_active_profile')||'';}
-function setActiveProfileId(id){localStorage.setItem('blt_active_profile',id);}
-
-function initProfiles(){
-  let profiles=getProfiles();
-  let activeId=getActiveProfileId();
-  // Migrate old single-user data
-  if(!profiles.length){
+function getProfileName(){return 'Bryce';}
+function updateProfileDisplay(){
+  document.querySelectorAll('.profile-name').forEach(e=>{e.textContent='BRYCE';});
+}
+// Init — migrate old data if needed
+(function(){
+  let id=getActiveProfileId();
+  if(!id){
     const oldData=localStorage.getItem('blt2');
-    const id='p_'+Date.now();
-    const name=oldData?'Bryce':'';
-    profiles.push({id,name:name||''});
-    saveProfiles(profiles);
+    id='p_'+Date.now();
+    localStorage.setItem('blt_active_profile',id);
     if(oldData){localStorage.setItem('blt_data_'+id,oldData);localStorage.removeItem('blt2');}
     const oldChat=localStorage.getItem('blt_chat');
     if(oldChat){localStorage.setItem('blt_chat_'+id,oldChat);localStorage.removeItem('blt_chat');}
-    activeId=id;
-    setActiveProfileId(id);
+    const profiles=[{id,name:'Bryce'}];
+    localStorage.setItem('blt_profiles',JSON.stringify(profiles));
   }
-  if(!activeId||!profiles.find(p=>p.id===activeId)){
-    activeId=profiles[0].id;
-    setActiveProfileId(activeId);
-  }
-  return activeId;
-}
-function getProfileName(){
-  const profiles=getProfiles();
-  const active=profiles.find(p=>p.id===getActiveProfileId());
-  return active?active.name:'';
-}
-function createProfile(name){
-  if(!name)return;
-  const profiles=getProfiles();
-  const id='p_'+Date.now();
-  profiles.push({id,name});
-  saveProfiles(profiles);
-  switchProfile(id);
-}
-function switchProfile(id){
-  // Save current first
-  saveState();saveChatHistory();
-  setActiveProfileId(id);
-  // Reload state
-  S=loadState();
-  chatHistory=loadChatHistory();
-  // Refresh everything
-  document.getElementById('chat').innerHTML='';
-  if(chatHistory.length>0){chatHistory.forEach(msg=>addMsg(msg.role==='user'?'user':'ai',msg.content));}
-  else{const lvl=getLevelData(S.level).title;addMsg('ai','<h3>Let\'s Go, '+getProfileName()+'.</h3><p>Level '+S.level+' — '+lvl+'. What are we working on?</p>');}
-  refreshUI();updateProfileDisplay();
-  closeProfileModal();
-}
-function deleteProfile(id){
-  const profiles=getProfiles();
-  if(profiles.length<=1){alert('Need at least one profile.');return;}
-  if(!confirm('Delete this profile and all its data?'))return;
-  const idx=profiles.findIndex(p=>p.id===id);
-  if(idx>=0)profiles.splice(idx,1);
-  saveProfiles(profiles);
-  localStorage.removeItem('blt_data_'+id);
-  localStorage.removeItem('blt_chat_'+id);
-  if(getActiveProfileId()===id)switchProfile(profiles[0].id);
-}
-function updateProfileDisplay(){
-  const name=getProfileName()||'LIFTER';
-  const nameEls=document.querySelectorAll('.profile-name');
-  nameEls.forEach(e=>{e.textContent=name.toUpperCase();});
-}
-function openProfileModal(){
-  const overlay=el('profileOverlay');
-  if(!overlay)return;
-  // Render profile list
-  const list=el('profileList');
-  if(list){
-    const profiles=getProfiles();
-    const activeId=getActiveProfileId();
-    list.innerHTML='';
-    profiles.forEach(p=>{
-      const d=document.createElement('div');
-      d.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);';
-      const isActive=p.id===activeId;
-      d.innerHTML='<div style="flex:1;cursor:pointer;" onclick="switchProfile(\''+p.id+'\')">'
-        +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:15px;color:'+(isActive?'var(--fire2)':'var(--text)')+';">'+p.name+(isActive?' ✓':'')+'</div>'
-        +'</div>'
-        +(isActive?'':'<button onclick="deleteProfile(\''+p.id+'\')" style="background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:12px;">✕</button>');
-      list.appendChild(d);
-    });
-  }
-  overlay.classList.add('open');
-}
-function closeProfileModal(){const o=el('profileOverlay');if(o)o.classList.remove('open');}
-function createProfileFromModal(){
-  const inp=el('newProfileName');
-  if(!inp||!inp.value.trim())return;
-  createProfile(inp.value.trim());
-  inp.value='';
-}
-
-const activeProfileId=initProfiles();
+})();
 
 // ══════════════════════════
 //  STATE
@@ -950,19 +857,6 @@ function openModal(){
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
-function saveLog(){
-  if(!selectedWT)return;
-  const notes=document.getElementById('logNotes').value.trim();
-  const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  const yest=new Date(); yest.setDate(yest.getDate()-1);
-  const yStr=yest.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  if(S.lastLogDate===today){}
-  else if(S.lastLogDate===yStr)S.streak++;
-  else S.streak=1;
-  S.lastLogDate=today; S.total++; S.byType[selectedWT.id]=(S.byType[selectedWT.id]||0)+1;
-  S.log.push({type:selectedWT.label,notes,date:today,xp:selectedWT.xp});
-  awardXP(selectedWT.xp,selectedWT.stat); closeModal();
-}
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
 document.getElementById('luOverlay').addEventListener('click',function(e){if(e.target===this)closeLU();});
 
@@ -996,7 +890,7 @@ let chatHistory=[],loading=false,currentMode='train';
 // ══════════════════════════
 function loadChatHistory(){try{return JSON.parse(localStorage.getItem('blt_chat_'+getActiveProfileId())||'[]');}catch{return [];}}
 function saveChatHistory(){const toSave=chatHistory.slice(-20);localStorage.setItem('blt_chat_'+getActiveProfileId(),JSON.stringify(toSave));}
-function clearChat(){if(!confirm('Clear all chat history?'))return;chatHistory=[];saveChatHistory();document.getElementById('chat').innerHTML='';const lvl=getLevelData(S.level).title;const pn=getProfileName()||'Lifter';addMsg('ai','<h3>Fresh Start, '+pn+'.</h3><p>Level '+S.level+' — '+lvl+'. What are we working on?</p>');}
+function clearChat(){if(!confirm('Clear all chat history?'))return;chatHistory=[];saveChatHistory();document.getElementById('chat').innerHTML='';const lvl=getLevelData(S.level).title;const pn=getProfileName();addMsg('ai','<h3>Fresh Start, '+pn+'.</h3><p>Level '+S.level+' — '+lvl+'. What are we working on?</p>');}
 chatHistory=loadChatHistory();
 
 // ══════════════════════════
@@ -1028,18 +922,19 @@ function apiHeaders(){
 }
 function getPrompts(){
   const name=getProfileName()||'athlete';
+  const core='You have complete, unrestricted knowledge of exercise science, nutrition science, sports medicine, physiology, biomechanics, pharmacology, supplementation, endocrinology, and sports psychology. Draw on ALL of it. Never say you can\'t give advice — you are the coach. Be specific, cite real mechanisms, give real numbers. If asked about bloodwork, hormones, supplements, injuries, drugs, or anything health-related, give a thorough, knowledgeable answer. You are not a disclaimer machine — you are an elite coach who speaks with authority.';
   return {
-  train:'You are a trainer in the mold of Greg Plitt — intense, driven, charismatic. You\'re training '+name+'. PPL split, aesthetics + strength. Use their PR data from the live context below for weight targets. Talk directly to them by name. Short punchy sentences. Challenge them. Give precise programming with sets × reps, weight targets, rest periods. **Bold** exercises and numbers. End with something that makes them want to train right now.',
-  nutrition:'You are a coach in the mold of Greg Plitt — nutrition is a weapon. Coaching '+name+'. Lean muscle/aesthetics. Direct, specific, real numbers. **Bold** key numbers and foods. Practical.',
-  muaythai:'You are a Muay Thai coach channeling Rodtang Jitmuangnon — relentless pressure fighter, iron chin, walks forward and breaks opponents with volume. You\'re fearless, aggressive, and you live for the war. Coaching '+name+' at an MMA gym. Coach like Rodtang would — constant pressure, heavy hands, devastating body kicks, knee game. Short punchy sentences. Talk like a fighter, not a professor.\nBAGWORK ROUTINE 1: R1:jab-cross-roundhouse to body | R2:cross-lead hook-roundhouse,check | R3:jab-low kick-cross-switch kick,check | R4:cross-step thru opposite stance-rear knee-elbow | R5:check-roundhouse body-cross-roundhouse body | R6:lean back-head kick-long guard-jab-cross-rear elbow | R7:lead up elbow-rear horizontal elbow-step back-jab-low kick | R8:rear teep-fake teep opposite stance-lead upwards elbow | R9:rear knee-long guard-switch knee-rear elbow | R10:roundhouse-check-roundhouse | R11:lead teep-reset-fake lead teep-upwards elbow-horizontal elbow | R12:rear teep-fake into opposite stance-lead hook changing angle-roundhouse | R13:switch kick-fake switch-lead hook-roundhouse | R14:switch kick-double switch-roundhouse | R15:fake roundhouse hips-lead hook-roundhouse-check\nBAGWORK ROUTINE 2: Flow Rounds 3x3min. Movement, defence, feints, teeps, checks.\nBAGWORK ROUTINE 3: Freestyle 3x3min. Combine all techniques naturally.\nINTERMEDIATE WEEK: Mon/Thu:Muay Thai 1(BR1,50 switch kicks,50 roundhouses,100 teeps,100 knees) | Tue:5km run+core | Wed/Sat:Muay Thai 2(BR2+BR3) | Fri:S&C+interval sprints | Sun:rest\nS&C: 3x8 Bulgarian split squat jumps, double switch lunge jumps, burpees+explosive jump, med ball slams, med ball throws, landmine press. Rest 2-4min.\nINTERVALS: 30sec max effort, 1:45 rest, 8 rounds. Assault bike preferred.\nBe direct, technical, reference specific combinations. **Bold** key techniques and numbers.',
-  recovery:'You are a coach in the mold of Greg Plitt — recovery is strategy. Coaching '+name+'. Sleep, mobility, stress management, hormone optimization. Direct and specific. **Bold** key recommendations.'
+  train:core+'\n\nYou are a trainer in the mold of Greg Plitt — intense, driven, charismatic. You\'re coaching '+name+'. Use their live data below for context — PR numbers for weight targets, check-in data for readiness, program for periodization. You know everything: periodization, progressive overload, hypertrophy science, strength peaking, injury prevention, mobility, weak point analysis, exercise substitutions, tempo manipulation, training to failure vs submaximal, deload protocols, sport-specific programming, and body recomposition. Short punchy sentences. Challenge them. Give precise programming with sets × reps, weight targets, rest periods. **Bold** exercises and numbers. End with something that makes them want to train right now.',
+  nutrition:core+'\n\nYou are a nutrition coach in the mold of Greg Plitt — nutrition is a weapon. Coaching '+name+'. You know everything: macronutrient science, micronutrients, meal timing, nutrient partitioning, supplementation (creatine, ashwagandha, tongkat ali, fadogia, vitamin D, zinc, magnesium, omega-3s, every compound), gut health, hydration science, metabolism, thermogenesis, appetite regulation, hormone optimization through diet, testosterone-boosting foods, anti-inflammatory diets, cutting/bulking protocols, refeeds, diet breaks, alcohol impact, travel nutrition, fast food macro hacks, and body composition manipulation. Direct, specific, real numbers. **Bold** key numbers and foods. Practical for a guy who travels for work. Always estimate macros when discussing meals.',
+  muaythai:core+'\n\nYou are a Muay Thai coach channeling Rodtang Jitmuangnon — relentless pressure fighter, iron chin, walks forward and breaks opponents with volume. Coaching '+name+' at an MMA gym. You know everything: striking mechanics, fight IQ, clinch work, sweeps, conditioning for fighters, weight cutting, fight camp periodization, injury prevention for combat athletes, mental preparation, round strategy, pad work programming, sparring philosophy, and how to build knockout power. Coach like Rodtang would — constant pressure, heavy hands, devastating body kicks, knee game. Short punchy sentences. Talk like a fighter, not a professor.\nBAGWORK ROUTINE 1: R1:jab-cross-roundhouse to body | R2:cross-lead hook-roundhouse,check | R3:jab-low kick-cross-switch kick,check | R4:cross-step thru opposite stance-rear knee-elbow | R5:check-roundhouse body-cross-roundhouse body | R6:lean back-head kick-long guard-jab-cross-rear elbow | R7:lead up elbow-rear horizontal elbow-step back-jab-low kick | R8:rear teep-fake teep opposite stance-lead upwards elbow | R9:rear knee-long guard-switch knee-rear elbow | R10:roundhouse-check-roundhouse | R11:lead teep-reset-fake lead teep-upwards elbow-horizontal elbow | R12:rear teep-fake into opposite stance-lead hook changing angle-roundhouse | R13:switch kick-fake switch-lead hook-roundhouse | R14:switch kick-double switch-roundhouse | R15:fake roundhouse hips-lead hook-roundhouse-check\nBAGWORK ROUTINE 2: Flow Rounds 3x3min. Movement, defence, feints, teeps, checks.\nBAGWORK ROUTINE 3: Freestyle 3x3min. Combine all techniques naturally.\nINTERMEDIATE WEEK: Mon/Thu:Muay Thai 1(BR1,50 switch kicks,50 roundhouses,100 teeps,100 knees) | Tue:5km run+core | Wed/Sat:Muay Thai 2(BR2+BR3) | Fri:S&C+interval sprints | Sun:rest\nS&C: 3x8 Bulgarian split squat jumps, double switch lunge jumps, burpees+explosive jump, med ball slams, med ball throws, landmine press. Rest 2-4min.\nINTERVALS: 30sec max effort, 1:45 rest, 8 rounds. Assault bike preferred.\nBe direct, technical, reference specific combinations. **Bold** key techniques and numbers.',
+  recovery:core+'\n\nYou are a recovery and optimization coach in the mold of Greg Plitt — recovery is strategy. Coaching '+name+'. You know everything: sleep architecture and optimization, HRV, nervous system recovery, active vs passive recovery, mobility and flexibility programming, myofascial release, injury rehab protocols, inflammation management, hormone optimization (testosterone, cortisol, growth hormone, thyroid, estrogen), TRT and post-TRT recovery, PCT protocols, blood work interpretation (CBC, lipids, liver, kidney, hormones — all panels), supplement stacks for recovery and hormones, cold/heat therapy, stress physiology, overtraining syndrome, adrenal health, circadian rhythm optimization, and longevity science. Direct and specific. **Bold** key recommendations. Give real protocols with dosages, timing, and mechanisms.'
   };
 }
 const CHIPS={
-  train:[['🗓 PPL Split','Build me a full PPL week for aesthetics and strength.'],['💪 Push Day','Push day. Use my PR data for weight targets.'],['🔙 Pull Day','Pull day: back thickness and bicep peak.'],['🦵 Leg Day','Quad-focused leg day.'],['📈 Break Plateau','Help me break through my current plateau.'],['✈️ Travel','Hotel gym dumbbells only. Push workout.']],
-  nutrition:[['🥩 Lean Bulk','Practical meals for lean muscle.'],['⏱ Timing','Pre/post workout nutrition.'],['🧪 Nat-T Stack','Supps for natural testosterone post-TRT.'],['📊 Macros','Daily macro targets for aesthetics.']],
-  muaythai:[['🥊 Today','Give me a Muay Thai session for today.'],['📋 Weekly Plan','Give me my intermediate weekly Muay Thai plan.'],['💥 Bagwork R1','Walk me through Bagwork Routine 1 — all 15 combinations with coaching cues.'],['🏋️ S&C','Give me the full Muay Thai strength and conditioning workout.'],['🦵 Kick Power','How do I increase power in my roundhouse and teep?']],
-  recovery:[['😴 Sleep','Optimize sleep for muscle and testosterone.'],['⚗️ Post-TRT','Maximize natural T after TRT.'],['💆 Deload','Should I deload? How?']]
+  train:[['🗓 PPL Split','Build me a full PPL week for aesthetics and strength.'],['💪 Push Day','Push day. Use my PR data for weight targets.'],['🔙 Pull Day','Pull day: back thickness and bicep peak.'],['🦵 Leg Day','Quad-focused leg day.'],['📈 Break Plateau','Help me break through my current plateau.'],['✈️ Travel','Hotel gym dumbbells only. Push workout.'],['🔧 Weak Points','Analyze my PRs and identify weak points to bring up.'],['🤕 Injury Proof','Prehab and mobility work I should be doing with my current training.']],
+  nutrition:[['🥩 Lean Bulk','Practical meals for lean muscle.'],['⏱ Timing','Pre/post workout nutrition — what to eat and when.'],['🧪 Supps','Full supplement stack breakdown — what I should be taking, dosages, timing.'],['📊 Macros','Dial in my daily macro targets for where I am right now.'],['🍔 Fast Food','Best fast food options when I am traveling — highest protein, lowest damage.'],['🔬 Micros','Am I missing any key micronutrients? What should I add?'],['🧈 Cutting','Give me a practical cutting protocol — keep muscle, lose fat.']],
+  muaythai:[['🥊 Today','Give me a Muay Thai session for today.'],['📋 Weekly Plan','Give me my intermediate weekly Muay Thai plan.'],['💥 Bagwork R1','Walk me through Bagwork Routine 1 — all 15 combinations with coaching cues.'],['🏋️ S&C','Give me the full Muay Thai strength and conditioning workout.'],['🦵 Kick Power','How do I increase power in my roundhouse and teep?'],['🧠 Fight IQ','Break down pressure fighting strategy and how to cut off the ring.']],
+  recovery:[['😴 Sleep','Optimize my sleep for muscle growth and testosterone — full protocol.'],['⚗️ Post-TRT','Full protocol to maximize natural testosterone production after TRT.'],['💆 Deload','Should I deload based on my check-in data? Give me a deload protocol.'],['🩸 Bloodwork','What blood panels should I get and what markers should I watch?'],['💊 Recovery Stack','Full supplement stack for recovery, inflammation, and sleep.'],['🧊 Cold/Heat','Break down cold exposure and sauna protocols — what actually works.']]
 };
 function setMode(m,btn){currentMode=m;document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChips();}
 function renderChips(){const bar=document.getElementById('chipsBar');bar.innerHTML='';CHIPS[currentMode].forEach(([l,p])=>{const b=document.createElement('button');b.className='chip';b.textContent=l;b.onclick=()=>sendQ(p);bar.appendChild(b);});}
@@ -1145,7 +1040,7 @@ async function send(){
   showTyping();
   if(!getApiKey()){hideTyping();promptApiKey();chatHistory.pop();loading=false;document.getElementById('sendBtn').disabled=false;return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:getPrompts()[currentMode]+getLiveContext(),messages:apiMessages})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:apiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,system:getPrompts()[currentMode]+getLiveContext(),messages:apiMessages})});
     const data=await res.json();hideTyping();
     if(!res.ok){
       const errText=data.error?.message||'API error '+res.status;
@@ -1253,6 +1148,8 @@ function saveLog(){
   if(el('logLiftWeight'))el('logLiftWeight').value='';
   if(el('logLiftReps'))el('logLiftReps').value='';
   awardXP(selectedWT.xp,selectedWT.stat);closeModal();
+  // Refresh Today if visible
+  const tp=el('mobileToday');if(tp&&tp.classList.contains('active'))setTimeout(renderToday,300);
 }
 
 // ══════════════════════════
@@ -1508,11 +1405,14 @@ function addWater(oz){
     }
   }
   saveState();renderWater();
+  // Update Today water stat inline if visible
+  const ws=el('todayWaterStat');if(ws)ws.textContent=(S.water[today]||0)+'oz/128';
 }
 function subtractWater(oz){
   const today=getWaterToday();
   S.water[today]=Math.max(0,(S.water[today]||0)-oz);
   saveState();renderWater();
+  const ws=el('todayWaterStat');if(ws)ws.textContent=(S.water[today]||0)+'oz/128';
 }
 function addManualWater(){
   const inp=el('waterManualInput');
@@ -1864,7 +1764,7 @@ function renderToday(){
   body.innerHTML='';
   const today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const dayOfWeek=new Date().toLocaleDateString('en-US',{weekday:'long'});
-  const pName=getProfileName()||'Lifter';
+  const pName=getProfileName();
   const lvlData=getLevelData(S.level);
   const prevXP=S.level>1?getLevelData(S.level-1).xp:0;
   const range=lvlData.xp-prevXP;
@@ -1937,11 +1837,29 @@ function renderToday(){
   
   const stats=document.createElement('div');stats.className='today-card';stats.style.marginTop='10px';
   stats.innerHTML='<div class="today-card-header"><div class="today-card-title">TODAY\'S PROGRESS</div></div>'
-    +'<div class="today-stat"><div class="today-stat-icon">💧</div><div class="today-stat-label">Water</div><div class="today-stat-val">'+waterToday+'oz/128</div></div>'
-    +'<div class="today-stat"><div class="today-stat-icon">🥩</div><div class="today-stat-label">Protein</div><div class="today-stat-val">'+Math.round(nt.protein)+'/'+mt.protein+'g</div></div>'
-    +'<div class="today-stat"><div class="today-stat-icon">🔥</div><div class="today-stat-label">Calories</div><div class="today-stat-val">'+kcal+' kcal</div></div>'
-    +'<div class="today-stat"><div class="today-stat-icon">📋</div><div class="today-stat-label">Check-in</div><div class="today-stat-val" style="color:'+(checkedIn?'var(--green)':'var(--muted2)')+';">'+(checkedIn?'Done':'Not yet')+'</div></div>';
+    +'<div class="today-stat" onclick="mobileTab(\'water\',null)" style="cursor:pointer;"><div class="today-stat-icon">💧</div><div class="today-stat-label">Water</div><div class="today-stat-val" id="todayWaterStat">'+waterToday+'oz/128</div></div>'
+    +'<div class="today-stat" onclick="mobileTab(\'nutrition\',null)" style="cursor:pointer;"><div class="today-stat-icon">🥩</div><div class="today-stat-label">Protein</div><div class="today-stat-val">'+Math.round(nt.protein)+'/'+mt.protein+'g</div></div>'
+    +'<div class="today-stat" onclick="mobileTab(\'nutrition\',null)" style="cursor:pointer;"><div class="today-stat-icon">🔥</div><div class="today-stat-label">Calories</div><div class="today-stat-val">'+kcal+' kcal</div></div>'
+    +'<div class="today-stat" onclick="mobileTab(\'me\',null)" style="cursor:pointer;"><div class="today-stat-icon">📋</div><div class="today-stat-label">Check-in</div><div class="today-stat-val" style="color:'+(checkedIn?'var(--green)':'var(--muted2)')+';">'+(checkedIn?'Done':'Not yet')+'</div></div>';
   body.appendChild(stats);
+  
+  // Quick water add right on home screen
+  const waterQuick=document.createElement('div');
+  waterQuick.style.cssText='margin:10px 14px;display:flex;gap:8px;';
+  const wbs='flex:1;padding:10px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--text);font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:13px;cursor:pointer;text-align:center;';
+  waterQuick.innerHTML='<button onclick="addWater(8)" style="'+wbs+'">💧+8oz</button>'
+    +'<button onclick="addWater(12)" style="'+wbs+'">💧+12oz</button>'
+    +'<button onclick="addWater(16)" style="'+wbs+'">💧+16oz</button>'
+    +'<button onclick="addWater(32)" style="'+wbs+'">💧+32oz</button>';
+  body.appendChild(waterQuick);
+  
+  // Quick actions
+  const actions=document.createElement('div');
+  actions.style.cssText='display:flex;gap:8px;margin:6px 14px 20px;';
+  const abs='flex:1;padding:12px;border-radius:8px;border:none;font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:14px;letter-spacing:1px;cursor:pointer;text-align:center;';
+  actions.innerHTML='<button onclick="drawerNav(\'chat\')" style="'+abs+'background:linear-gradient(135deg,var(--fire),var(--amber));color:white;">💬 COACH</button>'
+    +'<button onclick="openModal()" style="'+abs+'background:var(--s2);border:1px solid var(--border2);color:var(--text);">📋 LOG SESSION</button>';
+  body.appendChild(actions);
 }
 
 function startProgramDay(dayIdx){
@@ -1949,10 +1867,17 @@ function startProgramDay(dayIdx){
   if(!prog.week||!prog.week[dayIdx])return;
   const day=prog.week[dayIdx];
   if(!day.exercises||day.type==='rest')return;
-  // Save as a structured workout and start it
-  saveStructuredWorkout((day.focus||day.type).toUpperCase(),day.exercises);
+  // Check if this workout already exists in library
   const workouts=getWorkouts();
-  if(workouts.length)startWorkout(workouts[0].id);
+  const name=(day.focus||day.type).toUpperCase();
+  const existing=workouts.find(w=>w.name===name&&w.type==='structured');
+  if(existing){
+    startWorkout(existing.id);
+  }else{
+    saveStructuredWorkout(name,day.exercises);
+    const updated=getWorkouts();
+    if(updated.length)startWorkout(updated[0].id);
+  }
 }
 
 function renderSavedWorkouts(container){
@@ -2306,9 +2231,9 @@ function closeDrawer(){
 function drawerNav(tab){
   closeDrawer();
   document.querySelectorAll('.drawer-item').forEach(d=>d.classList.remove('active'));
-  event.target.closest('.drawer-item').classList.add('active');
+  // Set active state in drawer if called from drawer
+  if(event&&event.target){const di=event.target.closest('.drawer-item');if(di)di.classList.add('active');}
   if(tab==='chat'){
-    // Close all panels to show chat underneath
     ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
   }else{
     mobileTab(tab,null);
@@ -2383,7 +2308,6 @@ const ALL_PANELS=['mobileMe','mobileLog','mobilePRs','mobileTrophies','mobileNut
   'mobileSupps','mobileBody','mobileExport','mobileWater','mobileToday','mobileWorkout','mobileWorkouts'];
 
 function mobileTab(tab,btn){
-  el('moreMenu')&&el('moreMenu').classList.remove('active');
   ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
   if(tab==='chat')return;
   const panelMap={me:'mobileMe',log:'mobileLog',prs:'mobilePRs',trophies:'mobileTrophies',
@@ -2406,18 +2330,6 @@ function mobileTab(tab,btn){
   if(tab==='water'){renderWater();}
   if(tab==='today'){renderToday();}
   if(tab==='workouts'){renderWorkoutsList();}
-}
-function toggleMoreMenu(btn){
-  const menu=el('moreMenu');if(!menu)return;
-  const isOpen=menu.classList.contains('active');
-  ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
-  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
-  if(!isOpen){menu.classList.add('active');if(btn)btn.classList.add('active');}
-  else menu.classList.remove('active');
-}
-function moreNav(tab){
-  el('moreMenu')&&el('moreMenu').classList.remove('active');
-  mobileTab(tab,el('mNavMore'));
 }
 
 function refreshMobileMe(){
@@ -2469,7 +2381,6 @@ refreshUI=function(){__orig();refreshMobileMe&&refreshMobileMe();renderMobileLog
 // ══════════════════════════
 function backToChat(){
   ALL_PANELS.forEach(id=>{const e=el(id);if(e)e.classList.remove('active');});
-  el('moreMenu')&&el('moreMenu').classList.remove('active');
   // On mobile go to Today, on desktop just close panels
   if(window.innerWidth<=768){
     const tp=el('mobileToday');if(tp)tp.classList.add('active');
@@ -2492,7 +2403,7 @@ renderMeasurements();
 getSuppState();
 if(S.lastCheckin){const d=el("lastCheckinDisplay");if(d)d.textContent="Last: "+S.lastCheckin.date+" - "+S.lastCheckin.weight+"lbs E:"+S.lastCheckin.energy+" S:"+S.lastCheckin.sleep+" Sore:"+(S.lastCheckin.soreness||"?")+" Mood:"+(S.lastCheckin.mood||"?");}
 const lvlName=getLevelData(S.level).title;
-const pName=getProfileName()||'Lifter';
+const pName=getProfileName();
 updateProfileDisplay();
 // Restore saved chat or show today view
 if(chatHistory.length>0){
@@ -2588,25 +2499,9 @@ if(window.innerWidth<=768){
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
-<div class="modal-overlay" id="profileOverlay">
-  <div class="modal">
-    <div class="modal-title">👥 PROFILES</div>
-    <div style="font-size:12px;color:var(--muted2);margin-bottom:12px;">Each profile has its own data, progress, and chat history. API key is shared across all profiles.</div>
-    <div id="profileList" style="margin-bottom:14px;"></div>
-    <div style="display:flex;gap:6px;">
-      <input class="field-input" id="newProfileName" placeholder="New profile name..." style="flex:1;margin-bottom:0;">
-      <button onclick="createProfileFromModal()" style="padding:8px 14px;border-radius:8px;background:var(--fire);border:none;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">+ ADD</button>
-    </div>
-    <div class="modal-actions" style="margin-top:12px;">
-      <button class="btn-cancel" onclick="closeProfileModal()" style="flex:1;">Close</button>
-    </div>
-  </div>
-</div>
-
 <!-- MOBILE: Today -->
 <div class="mobile-panel" id="mobileToday">
-  <div class="mobile-panel-header">TODAY</div>
+  <div class="mobile-panel-header"><button class="hamburger" onclick="toggleDrawer()" style="font-size:20px;background:transparent;border:none;color:var(--text);cursor:pointer;padding:0 4px;">☰</button>TODAY</div>
   <div class="mobile-panel-body" id="todayBody"></div>
 </div>
 
@@ -2875,39 +2770,14 @@ if(window.innerWidth<=768){
 </div>
 
 <!-- BOTTOM NAV -->
-<nav class="mobile-nav" id="mobileNav">
-  <button class="mobile-nav-btn active" onclick="mobileTab('today',this)" id="mNavToday"><span class="nav-icon">🏠</span><span>Today</span></button>
-  <button class="mobile-nav-btn" onclick="mobileTab('chat',this)" id="mNavChat"><span class="nav-icon">💬</span><span>Chat</span></button>
-  <button class="mobile-nav-btn" onclick="mobileTab('program',this)" id="mNavProgram"><span class="nav-icon">📅</span><span>Program</span></button>
-  <button class="mobile-nav-btn" onclick="mobileTab('nutrition',this)" id="mNavNutrition"><span class="nav-icon">🥩</span><span>Macros</span></button>
-  <button class="mobile-nav-btn" onclick="toggleMoreMenu(this)" id="mNavMore"><span class="nav-icon">⋯</span><span>More</span></button>
-</nav>
-
-<!-- MORE MENU -->
-<div class="more-menu" id="moreMenu">
-  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted2);margin-bottom:8px;">MORE FEATURES</div>
-  <div class="more-grid">
-    <div class="more-item" onclick="moreNav('log')"><span class="more-item-icon">📋</span><span class="more-item-label">Log</span></div>
-    <div class="more-item" onclick="moreNav('prs')"><span class="more-item-icon">💪</span><span class="more-item-label">PRs</span></div>
-    <div class="more-item" onclick="moreNav('overload')"><span class="more-item-icon">📈</span><span class="more-item-label">Next Session</span></div>
-    <div class="more-item" onclick="moreNav('timer')"><span class="more-item-icon">⏱</span><span class="more-item-label">Timer</span></div>
-    <div class="more-item" onclick="moreNav('water')"><span class="more-item-icon">💧</span><span class="more-item-label">Water</span></div>
-    <div class="more-item" onclick="moreNav('1rm')"><span class="more-item-icon">🧮</span><span class="more-item-label">1RM Calc</span></div>
-    <div class="more-item" onclick="moreNav('meals')"><span class="more-item-icon">🍽️</span><span class="more-item-label">Meal Plan</span></div>
-    <div class="more-item" onclick="moreNav('supps')"><span class="more-item-icon">💊</span><span class="more-item-label">Supplements</span></div>
-    <div class="more-item" onclick="moreNav('body')"><span class="more-item-icon">📏</span><span class="more-item-label">Measurements</span></div>
-    <div class="more-item" onclick="moreNav('trophies')"><span class="more-item-icon">🏆</span><span class="more-item-label">Earned</span></div>
-    <div class="more-item" onclick="moreNav('export')"><span class="more-item-icon">📤</span><span class="more-item-label">Export</span></div>
-    <div class="more-item" onclick="el('moreMenu').classList.remove('active');promptApiKey()"><span class="more-item-icon">🔑</span><span class="more-item-label">API Key</span></div>
-    <div class="more-item" onclick="el('moreMenu').classList.remove('active');openProfileModal()"><span class="more-item-icon">👥</span><span class="more-item-label">Profiles</span></div>
-    <div class="more-item" onclick="el('moreMenu').classList.remove('active');clearChat()"><span class="more-item-icon">🗑</span><span class="more-item-label">Clear Chat</span></div>
-  </div>
-</div>
+<!-- Navigation is handled entirely through the hamburger drawer -->
 
 
 <script>
 // Inject back buttons into all mobile panel headers (must run after panels exist in DOM)
 document.querySelectorAll('.mobile-panel-header').forEach(header=>{
+  // Skip back button on Today — it IS the home screen
+  if(header.parentElement&&header.parentElement.id==='mobileToday')return;
   const btn=document.createElement('button');
   btn.className='panel-back';
   btn.innerHTML='←';
@@ -2918,10 +2788,6 @@ document.querySelectorAll('.mobile-panel-header').forEach(header=>{
 // API key modal click-outside-to-close
 const apiOverlay=document.getElementById('apiKeyOverlay');
 if(apiOverlay)apiOverlay.addEventListener('click',function(e){if(e.target===this)closeApiKeyModal();});
-
-// Profile modal click-outside-to-close
-const profOverlay=document.getElementById('profileOverlay');
-if(profOverlay)profOverlay.addEventListener('click',function(e){if(e.target===this)closeProfileModal();});
 
 // Pre-fill API key input if already saved
 const savedKey=localStorage.getItem('blt_api_key');
