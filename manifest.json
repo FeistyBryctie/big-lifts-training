@@ -2,10 +2,10 @@
   "name": "Big Lifts Training",
   "short_name": "Big Lifts",
   "description": "Your personal AI fitness coach",
-  "start_url": "/index.html",
+  "start_url": "/big-lifts-training/",
   "display": "standalone",
-  "background_color": "#080808",
-  "theme_color": "#080808",
+  "background_color": "#030308",
+  "theme_color": "#030308",
   "orientation": "portrait",
   "icons": [
     {
