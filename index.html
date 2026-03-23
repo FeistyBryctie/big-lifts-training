@@ -477,8 +477,8 @@ function updateVoiceUI(status){const ind=el('voiceIndicator');if(!ind)return;if(
 // Preload voices
 if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>getCoachVoice();speechSynthesis.getVoices();}
 // Hook into send response to speak when voice is active
-const _origAddMsg=addMsg;
-addMsg=function(role,content){_origAddMsg(role,content);if(role==='ai'&&voiceEnabled&&content.length>10){speakText(content);}};
+// Voice reply disabled — text only
+
 // Swipe to close drawer
 (function(){let startX=0,currentX=0,dragging=false;const drawer=document.getElementById('drawer');if(!drawer)return;drawer.addEventListener('touchstart',function(e){startX=e.touches[0].clientX;currentX=startX;dragging=true;drawer.style.transition='none';},{passive:true});drawer.addEventListener('touchmove',function(e){if(!dragging)return;currentX=e.touches[0].clientX;const dx=currentX-startX;if(dx<0)drawer.style.transform='translateX('+dx+'px)';},{passive:true});drawer.addEventListener('touchend',function(){if(!dragging)return;dragging=false;drawer.style.transition='';const dx=currentX-startX;if(dx<-60){closeDrawer();}else{drawer.style.transform='';}});})();
 // iOS Keyboard Fix
