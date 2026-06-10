@@ -149,6 +149,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 @keyframes splashCharIn{0%{opacity:0;transform:scale(0.25) translateY(40px);}60%{transform:scale(1.08) translateY(-6px);}80%{transform:scale(0.96) translateY(2px);}100%{opacity:1;transform:scale(1) translateY(0);}}
 @keyframes splashTextIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 @keyframes splashGlow{0%,100%{opacity:.2;transform:scale(.85);}50%{opacity:.55;transform:scale(1.1);}}
+@keyframes lvlGlow{0%{opacity:0;transform:scale(.5);}35%{opacity:1;transform:scale(1.05);}100%{opacity:.6;transform:scale(1.18);}}
+@keyframes lvlRank{0%{text-shadow:0 0 0 rgba(255,215,0,0);transform:scale(1);}35%{text-shadow:0 0 22px rgba(255,215,0,.85);transform:scale(1.04);}100%{text-shadow:0 0 8px rgba(255,215,0,.3);transform:scale(1);}}
+#lvlup{position:fixed;inset:0;z-index:9000;pointer-events:none;display:flex;align-items:center;justify-content:center;transition:opacity .4s;}
+#lvlup .lg{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,215,0,.5) 0%,rgba(255,140,0,.16) 42%,transparent 70%);animation:lvlGlow .9s ease-out forwards;}
+#lvlup .lt{text-align:center;position:relative;}
+#lvlup .lk{font-size:12px;font-weight:700;letter-spacing:3px;color:#ffd700;}
+#lvlup .lr{font-size:30px;font-weight:900;letter-spacing:1px;color:var(--text);margin-top:4px;animation:lvlRank .9s ease-out forwards;}
 @keyframes xpFill{from{width:0;}to{width:var(--xp-target);}}
 #splash{transition:opacity .55s ease;}
 /* Macro / nutrition */
@@ -182,7 +189,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .ach-tile{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;}
 .ach-tile.done{border-color:rgba(255,255,255,0.15);}
-.ach-icon{font-size:22px;margin-bottom:4px;}
+.ach-icon{margin-bottom:5px;height:26px;display:flex;align-items:center;justify-content:center;}
+.ach-icon svg{width:25px;height:25px;}
 .ach-name{font-size:10px;font-weight:700;letter-spacing:.3px;line-height:1.3;color:var(--text);}
 .ach-desc{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.3;}
 .type-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -456,9 +464,12 @@ const IDB={db:null,
 const LVL=[0,100,250,450,700,1000,1400,1900,2500,3300,4300,5500,7000,8800,11000,13600,16700,20400,24800,30000];
 function xpForLvl(l){const idx=l-1;return idx<LVL.length?LVL[idx]:Math.round(LVL[LVL.length-1]*Math.pow(1.35,idx-(LVL.length-1)));}
 function awardXP(n){
+  const prevLvl=S.level;
   S.xp+=n;
   let lv=1;for(let i=1;;i++){if(S.xp>=xpForLvl(i+1))lv=i+1;else break;}
-  S.level=lv;checkAchievements();save();
+  S.level=lv;
+  if(lv>prevLvl)setTimeout(goldPulse,150);
+  checkAchievements();save();
 }
 function xpPct(){const c=xpForLvl(S.level),nx=xpForLvl(S.level+1);return Math.min(1,(S.xp-c)/(nx-c));}
 
@@ -527,6 +538,18 @@ function startRest(s){
 }
 function skipRest(){clearInterval(restTick);const b=document.getElementById('rest-bar');if(b)b.classList.remove('show');}
 function beep(){try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.setValueAtTime(.3,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.4);o.start();o.stop(c.currentTime+.4);}catch(e){}}
+// ─── LEVEL-UP GOLD PULSE — quiet premium flourish ───────────────────────
+function goldPulse(){
+  try{
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const old=document.getElementById('lvlup');if(old)old.remove();
+    const ov=document.createElement('div');ov.id='lvlup';
+    ov.innerHTML='<div class="lg"></div><div class="lt"><div class="lk">LEVEL '+S.level+'</div><div class="lr">'+getClassName(S.level).toUpperCase()+'</div></div>';
+    document.body.appendChild(ov);
+    setTimeout(()=>{ov.style.opacity='0';},950);
+    setTimeout(()=>{if(ov.parentNode)ov.parentNode.removeChild(ov);},1400);
+  }catch(e){}
+}
 function finishWorkout(){
   if(!AW)return;clearInterval(woTick);clearInterval(restTick);
   const dur=Math.floor((Date.now()-AW.t0)/1000);
@@ -965,6 +988,30 @@ function getDailyQuote(){
 }
 
 // ACHIEVEMENTS
+const SVG=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+const LOCK=SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>');
+const ACH_ICONS={
+  first:'<svg viewBox="0 0 24 24" fill="#e0322a" stroke="none"><path d="M12 2.5s-6.5 7.3-6.5 11.5a6.5 6.5 0 0 0 13 0C18.5 9.8 12 2.5 12 2.5Z"/></svg>',
+  week:SVG('<path d="M5 4 8.5 8.5 12 6.5 15.5 8.5 19 4l-.8 8.2c-.2 2-1.4 3.8-3.2 4.8L12 21l-3-3c-1.8-1-3-2.8-3.2-4.8L5 4Z"/><path d="M9 11.5l1.6 1M15 11.5l-1.6 1"/><path d="M12 15l-1.1 1.3h2.2L12 15Z"/>'),
+  month:SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'),
+  hundo:SVG('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4M9 14l2 2 4-4"/>'),
+  streak3:SVG('<path d="M15.5 3.5a5 5 0 0 0-6 6.4L3.5 16l2.5 2.5 6.1-6.1a5 5 0 0 0 6.4-6l-3 3-2.4-2.4 3-3a5 5 0 0 0-.6-.5Z"/>'),
+  streak7:SVG('<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/>'),
+  streak14:SVG('<circle cx="12" cy="11" r="5"/><path d="M5.8 2.2 8.4 7.1 10.2 5.9Z" fill="currentColor" stroke="none"/><path d="M18.2 2.2 15.6 7.1 13.8 5.9Z" fill="currentColor" stroke="none"/><ellipse cx="10" cy="10.2" rx="0.95" ry="1.4" fill="currentColor" stroke="none"/><ellipse cx="14" cy="10.2" rx="0.95" ry="1.4" fill="currentColor" stroke="none"/><path d="M9.4 12.8c.9 1.3 4.3 1.3 5.2 0"/><path d="M10.4 15.6 12 21.5 13.6 15.6Z" fill="currentColor" stroke="none"/>'),
+  pr1:SVG('<path d="M7 3h10v18l-2-1.5-2 1.5-2-1.5-2 1.5L7 21Z"/><path d="M10 8h4M10 11h4M10 14h3"/>'),
+  pr5:SVG('<ellipse cx="12" cy="7.5" rx="6.5" ry="2"/><path d="M5.5 7.5v3.5c0 1.1 2.9 2 6.5 2s6.5-.9 6.5-2V7.5"/><path d="M5.5 11v3.5c0 1.1 2.9 2 6.5 2s6.5-.9 6.5-2V11"/>'),
+  xp1000:SVG('<path d="M3 20 10 7l3.5 5.5L16 9l5 11H3Z"/><path d="M8.5 12l1.5 1.5"/>'),
+  xp5000:SVG('<circle cx="12" cy="9.5" r="5.5"/><path d="M9.4 9.4l1.8 1.8 3.4-3.4"/><path d="M8.5 14l-2 6.5 5.5-3 5.5 3-2-6.5"/>'),
+  xp9000:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.4l1.3 2.7 2.9.3-2.2 2 .6 2.9L12 16l-2.6 1.3.6-2.9-2.2-2 2.9-.3L12 7.4Z" fill="currentColor" stroke="none"/></svg>',
+  lv5:SVG('<path d="M7 21V3"/><path d="M7 4h10l-2.5 3.5L17 11H7"/>'),
+  lv10:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.7 5.9 6.4.7-4.8 4.3 1.3 6.3L12 16.8l-5.9 3.1 1.3-6.3-4.8-4.3 6.4-.7L12 2.5Z"/></svg>',
+  lv20:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><rect x="1.5" y="9.3" width="6.2" height="5.4" rx="1.2"/><rect x="16.3" y="9.3" width="6.2" height="5.4" rx="1.2"/><circle cx="12" cy="12" r="5.3"/><path d="M12 9.2l.9 1.8 2 .3-1.45 1.4.34 2L12 13.7l-1.8.95.34-2L9.1 11.3l2-.3L12 9.2Z" fill="currentColor" stroke="none"/></svg>',
+  checkin1:SVG('<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'),
+  program1:SVG('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a3 3 0 0 1 6 0"/><path d="M8.5 11h7M8.5 14h7M8.5 17h4.5"/>'),
+  push10:SVG('<path d="M8.5 4.5 6.5 6.8C4.9 7.4 3.5 8.4 3.5 10v3.5h3V20h11v-6.5h3V10c0-1.6-1.4-2.6-3-3.2l-2-2.3"/><path d="M12 7v6.5M9 10.2h6"/>'),
+  legs5:SVG('<path d="M12 3.2c1.6 0 3 1 3.6 2.5 1.7.1 3 1.5 3 3.2 0 1.8-1.4 3.2-3.2 3.2H8.6C6.8 12.1 5.4 10.7 5.4 8.9c0-1.7 1.3-3.1 3-3.2C9 4.2 10.4 3.2 12 3.2Z"/><path d="M10.5 12.1v8.9M13.5 12.1v8.9M8.8 21h6.4"/>'),
+  cardio10:SVG('<path d="M12 3a8 8 0 0 0-8 8c0 2.4 1.1 4 2.5 5v2.5a1 1 0 0 0 1 1h1V18h2v1.5h1V18h2v1.5h1a1 1 0 0 0 1-1V16c1.4-1 2.5-2.6 2.5-5a8 8 0 0 0-8-8Z"/><circle cx="9" cy="11" r="1.5"/><circle cx="15" cy="11" r="1.5"/><path d="M12 14l-.7 1.5h1.4L12 14Z"/>')
+};
 const ACHIEVEMENTS=[
   {id:'first',  icon:'🩸',name:'FIRST BLOOD',   desc:'Log your first session',        check:s=>s.log.length>=1},
   {id:'week',   icon:'🔥',name:'DIFFERENT BREED',desc:'7 sessions logged',             check:s=>s.log.length>=7},
@@ -976,7 +1023,7 @@ const ACHIEVEMENTS=[
   {id:'pr1',    icon:'🏅',name:'RECEIPTS',       desc:'Log your first PR',             check:s=>Object.keys(s.prs||{}).length>=1},
   {id:'pr5',    icon:'📊',name:'STACKING PLATES',desc:'5 different PRs',               check:s=>Object.keys(s.prs||{}).length>=5},
   {id:'xp1000', icon:'📈',name:'CLIMBING',       desc:'1,000 XP earned',               check:s=>s.xp>=1000},
-  {id:'xp5000', icon:'🏆',name:'THAT GUY',       desc:'5,000 XP earned',               check:s=>s.xp>=5000},
+  {id:'xp5000', icon:'🏆',name:'CERTIFIED',       desc:'5,000 XP earned',               check:s=>s.xp>=5000},
   {id:'xp9000', icon:'💥',name:'OVER 9000',       desc:'9,000 XP earned',              check:s=>s.xp>=9000},
   {id:'lv5',    icon:'⚡',name:'ARRIVED',         desc:'Reach level 5',                check:s=>s.level>=5},
   {id:'lv10',   icon:'🏛', name:'MAIN EVENT',     desc:'Reach level 10',               check:s=>s.level>=10},
@@ -995,7 +1042,7 @@ function checkAchievements(){
   ACHIEVEMENTS.forEach(a=>{
     if(!S.unlocked.includes(a.id)&&a.check(ctx)){
       S.unlocked.push(a.id);
-      setTimeout(()=>toast('🏆 '+a.name+' — '+a.desc),newUnlock?1200:200);
+      setTimeout(()=>toast('Unlocked — '+a.name),newUnlock?1200:200);
       newUnlock=true;
     }
   });
@@ -1329,7 +1376,7 @@ function renderMe(){
   const achHTML=ACHIEVEMENTS.map(a=>{
     const done=unlocked.includes(a.id);
     return`<div class="ach-tile${done?' done':''}" style="${done?'':'opacity:0.32;'}">
-      <div class="ach-icon">${done?a.icon:'🔒'}</div>
+      <div class="ach-icon" style="color:${done?'#ffd700':'var(--text3)'}">${done?(ACH_ICONS[a.id]||a.icon):LOCK}</div>
       <div class="ach-name">${a.name}</div>
       <div class="ach-desc">${a.desc}</div>
     </div>`;
@@ -1534,7 +1581,7 @@ function renderNutrition(){
     <div class="section" style="padding-top:20px;">
       <div style="background:var(--s1);border-radius:12px;border:1px solid var(--border);padding:16px;margin:0 16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div><div style="font-size:22px;font-weight:700;">${Math.round(m.cals)}</div><div style="font-size:11px;color:var(--text2);">${g.cals-Math.round(m.cals)>0?g.cals-Math.round(m.cals)+' cal remaining':'GOAL REACHED 🔥'}</div></div>
+          <div><div style="font-size:22px;font-weight:700;">${Math.round(m.cals)}</div><div style="font-size:11px;color:var(--text2);">${g.cals-Math.round(m.cals)>0?g.cals-Math.round(m.cals)+' cal remaining':'GOAL REACHED'}</div></div>
           <div style="width:52px;height:52px;border-radius:50%;border:3px solid var(--border);position:relative;display:flex;align-items:center;justify-content:center;">
             <svg style="position:absolute;inset:0;transform:rotate(-90deg);" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/><circle cx="26" cy="26" r="23" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-dasharray="${Math.round(calPct*1.445)} 144.5" stroke-linecap="round"/></svg>
             <span style="font-size:11px;font-weight:700;">${calPct}%</span>
@@ -1580,10 +1627,10 @@ function renderFoodSearch(){
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
       <div style="display:flex;gap:8px;">
         <input id="food-q" class="input" placeholder="Search food or brand…" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')doFoodSearch()">
-        ${hasBD?`<button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;font-size:20px;cursor:pointer;flex-shrink:0;" title="Scan barcode">📷</button>`:''}
+        ${hasBD?`<button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Scan barcode"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>`:''}
         <button onclick="doFoodSearch()" style="background:var(--text);color:var(--bg);border:none;padding:0 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;height:42px;flex-shrink:0;">Search</button>
       </div>
-      ${!hasBD?'<div style="font-size:11px;color:var(--text3);margin-top:8px;">📷 Barcode scanning available in Chrome/Android</div>':''}
+      ${!hasBD?'<div style="font-size:11px;color:var(--text3);margin-top:8px;">Barcode scanning available in Chrome/Android</div>':''}
     </div>
     <div style="padding:10px 16px 6px;font-size:11px;color:var(--text3);">Powered by Open Food Facts · Per 100g unless noted</div>
     <div id="food-results"></div>
@@ -1710,7 +1757,7 @@ function renderMeasurements(){
   const b=document.getElementById('b-measurements');if(!b)return;
   const meas=S.measurements||[];
   if(!meas.length){b.innerHTML='<div class="empty"><div class="empty-title">No measurements yet</div><div class="empty-sub">Track your body over time. Log weight, chest, waist, arms, and more.</div></div>';return;}
-  const labels={weight:'⚖️ Weight',chest:'📏 Chest',waist:'📏 Waist',hips:'📏 Hips',bicep:'💪 Bicep',thigh:'🦵 Thigh',neck:'📏 Neck'};
+  const labels={weight:'Weight',chest:'Chest',waist:'Waist',hips:'Hips',bicep:'Bicep',thigh:'Thigh',neck:'Neck'};
   // Progress per metric: compare its most-recent logged value to its earliest
   // logged value. (Entries only store fields that were filled in, so reading
   // meas[0]/meas[last] directly would drop metrics missing from those entries.)
@@ -1750,9 +1797,9 @@ function genIcon(size){
   ctx.arc(size-rad,size-rad,rad,0,Math.PI/2);ctx.lineTo(rad,size);
   ctx.arc(rad,size-rad,rad,Math.PI/2,Math.PI);ctx.lineTo(0,rad);
   ctx.arc(rad,rad,rad,Math.PI,-Math.PI/2);ctx.closePath();ctx.fill();
-  // Waist-up pixel character (same framing as before), scaled to fill the tile (no text)
+  // Waist-up pixel character (same framing as before), scaled large to fill the tile (no text)
   const CROP=33,COLS=48;
-  const CELL=Math.max(2,Math.floor(size*0.96/COLS));
+  const CELL=Math.max(2,Math.floor(size*1.25/COLS));
   const charW=COLS*CELL,charH=CROP*CELL;
   const xOff=Math.floor((size-charW)/2);
   const yOff=Math.floor((size-charH)/2);
