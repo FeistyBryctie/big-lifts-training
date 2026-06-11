@@ -31,7 +31,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
 .screen-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--s2);border:none;color:var(--text2);cursor:pointer;flex-shrink:0;}
 .screen-action{padding:6px 14px;border-radius:8px;background:var(--s2);border:none;color:var(--text);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;}
 .screen-action.primary{background:var(--text);color:var(--bg);}
-.screen-body{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--safe-bot)+16px);}
+.screen-body{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--safe-bot) + 16px);}
 .screen-body::-webkit-scrollbar{display:none;}
 #nav{display:flex;background:var(--s1);border-top:1px solid var(--border);padding-bottom:max(var(--safe-bot),8px);flex-shrink:0;}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border:none;background:none;color:var(--text3);cursor:pointer;transition:color .15s;}
@@ -140,7 +140,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
 .rating-row{display:flex;gap:4px;}
 .r-btn{flex:1;padding:8px 0;border-radius:7px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;}
 .r-btn.sel{background:var(--s3);border-color:var(--border2);color:var(--text);}
-#toast{position:fixed;bottom:calc(var(--safe-bot)+78px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:9px 18px;font-size:13px;font-weight:500;white-space:nowrap;opacity:0;transition:all .2s;z-index:500;pointer-events:none;}
+#toast{position:fixed;bottom:calc(var(--safe-bot) + 78px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:9px 18px;font-size:13px;font-weight:500;white-space:nowrap;opacity:0;transition:all .2s;z-index:500;pointer-events:none;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .empty{text-align:center;padding:60px 24px;color:var(--text2);}
 .empty-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px;}
@@ -1241,6 +1241,7 @@ function renderToday(){
           <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:12px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#0a84ff,#30d158);border-radius:2px;transition:width .3s;"></div></div>
           <div style="display:flex;gap:8px;">
             <button onclick="addWater(8)" class="btn" style="flex:1;padding:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;border-radius:8px;">+8 oz</button>
+            <button onclick="addWater(12)" class="btn" style="flex:1;padding:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;border-radius:8px;">+12 oz</button>
             <button onclick="addWater(16)" class="btn" style="flex:1;padding:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;border-radius:8px;">+16 oz</button>
             <button onclick="addWater(24)" class="btn" style="flex:1;padding:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;border-radius:8px;">+24 oz</button>
             <button onclick="resetWater()" class="btn" style="width:36px;padding:8px;background:var(--s2);border:1px solid var(--border);color:var(--text3);font-size:12px;border-radius:8px;">↺</button>
@@ -1439,7 +1440,7 @@ function renderMe(){
     </div>`;
   }).join('');
   b.innerHTML=`
-    <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:calc(var(--safe-top)+14px) 16px 20px;">
+    <div style="background:var(--s1);border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 14px) 16px 20px;">
       <div id="me-char" style="display:flex;justify-content:center;margin-bottom:14px;cursor:pointer;" onclick=""></div>
       <div style="text-align:center;">
         <div style="font-size:24px;font-weight:700;letter-spacing:-.5px;">${esc(S.name||'Bryce')}</div>
