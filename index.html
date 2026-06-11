@@ -1700,7 +1700,135 @@ function saveMacroGoals(){
 }
 
 // ─── FOOD SEARCH & BARCODE ─────────────────────────────────────────────
-let _foodResults=[];
+let _foodResults=[],_searchSeq=0;
+// Built-in staples (per 100g, USDA-style). These match instantly and rank
+// first so common whole foods "just work" — the OFF database is packaged
+// products, where "eggs" returns mayonnaise.
+const CF=(n,kc,p,c,f,sv,tags)=>({product_name:n,brands:'Common foods',serving_size:sv,tags:tags||'',nutriments:{'energy-kcal_100g':kc,'proteins_100g':p,'carbohydrates_100g':c,'fat_100g':f}});
+const COMMON_FOODS=[
+CF('Eggs, whole (cooked)',155,13,1.1,11,'50 g (1 large)','egg boiled scrambled fried'),
+CF('Egg whites',52,11,0.7,0.2,'33 g (1 large white)','egg white'),
+CF('Chicken breast, cooked',165,31,0,3.6,'113 g (4 oz)',''),
+CF('Chicken thigh, cooked',209,26,0,10.9,'113 g (4 oz)',''),
+CF('Ground beef 80/20, cooked',254,26,0,16,'113 g (4 oz)','hamburger'),
+CF('Ground beef 93/7, cooked',182,25,0,8.5,'113 g (4 oz)','lean'),
+CF('Steak, sirloin (cooked)',183,27,0,7.6,'113 g (4 oz)','beef'),
+CF('Salmon, cooked',208,22,0,13,'113 g (4 oz)','fish'),
+CF('Tuna, canned in water',116,26,0,0.8,'120 g (1 can drained)','fish'),
+CF('Shrimp, cooked',99,24,0.2,0.3,'85 g (3 oz)',''),
+CF('Tilapia, cooked',128,26,0,2.7,'113 g (4 oz)','fish'),
+CF('Ground turkey 93/7, cooked',203,25,0,11,'113 g (4 oz)',''),
+CF('Turkey breast, deli',104,17,4,2,'56 g (2 slices)','lunch meat cold cuts'),
+CF('Bacon, cooked',541,37,1.4,42,'12 g (1 slice)',''),
+CF('Pork chop, cooked',231,25,0,14,'113 g (4 oz)','pork'),
+CF('White rice, cooked',130,2.7,28,0.3,'158 g (1 cup)','rice'),
+CF('Brown rice, cooked',123,2.7,26,1,'155 g (1 cup)','rice'),
+CF('Oats, dry',379,13,67,6.5,'40 g (1/2 cup)','oatmeal'),
+CF('Pasta, cooked',158,5.8,31,0.9,'140 g (1 cup)','spaghetti noodles'),
+CF('Quinoa, cooked',120,4.4,21,1.9,'185 g (1 cup)',''),
+CF('Potato, baked',93,2.5,21,0.1,'173 g (1 medium)',''),
+CF('Sweet potato, baked',90,2,21,0.2,'114 g (1 medium)',''),
+CF('White bread',266,9,49,3.3,'28 g (1 slice)','toast'),
+CF('Whole wheat bread',247,13,41,3.4,'28 g (1 slice)','toast'),
+CF('Flour tortilla',310,8.3,52,7.7,'45 g (1 medium)','wrap'),
+CF('Banana',89,1.1,23,0.3,'118 g (1 medium)','fruit'),
+CF('Apple',52,0.3,14,0.2,'182 g (1 medium)','fruit'),
+CF('Blueberries',57,0.7,14.5,0.3,'148 g (1 cup)','berries fruit'),
+CF('Strawberries',32,0.7,7.7,0.3,'152 g (1 cup)','berries fruit'),
+CF('Orange',47,0.9,12,0.1,'131 g (1 medium)','fruit'),
+CF('Broccoli, cooked',35,2.4,7.2,0.4,'156 g (1 cup)','vegetable'),
+CF('Spinach, raw',23,2.9,3.6,0.4,'30 g (1 cup)','vegetable greens'),
+CF('Avocado',160,2,8.5,14.7,'50 g (1/3 fruit)',''),
+CF('Almonds',579,21,22,50,'28 g (~23 nuts)','nuts'),
+CF('Peanut butter',588,25,20,50,'32 g (2 tbsp)','pb'),
+CF('Olive oil',884,0,0,100,'14 g (1 tbsp)','oil'),
+CF('Butter',717,0.9,0.1,81,'14 g (1 tbsp)',''),
+CF('Whole milk',61,3.2,4.8,3.3,'244 g (1 cup)',''),
+CF('Milk, 2%',50,3.3,4.8,2,'244 g (1 cup)',''),
+CF('Greek yogurt, nonfat',59,10,3.6,0.4,'170 g (1 container)','yoghurt'),
+CF('Cottage cheese, 2%',84,11,4.3,2.3,'113 g (1/2 cup)',''),
+CF('Cheddar cheese',403,23,1.3,33,'28 g (1 oz)',''),
+CF('Whey protein powder',400,80,10,7,'30 g (1 scoop)','shake protein'),
+CF('Black beans, cooked',132,8.9,24,0.5,'172 g (1 cup)','beans'),
+CF('Chickpeas, cooked',164,8.9,27,2.6,'164 g (1 cup)','garbanzo beans'),
+CF('Honey',304,0.3,82,0,'21 g (1 tbsp)','')];
+
+// Fast-food pack: published per-item macros, stored per-100g; serving_size
+// carries the item's real weight so the portion prompt prefills it.
+const FF=(n,brand,tags,kc,p,c,f,sv)=>({product_name:n,brands:brand,serving_size:sv,tags:tags,nutriments:{'energy-kcal_100g':kc,'proteins_100g':p,'carbohydrates_100g':c,'fat_100g':f}});
+const FAST_FOODS=[
+FF('Big Mac','McDonald\'s','mcdonalds mcdonald burger',269,11.4,21.0,15.5,'219 g (1 burger)'),
+FF('Quarter Pounder with Cheese','McDonald\'s','mcdonalds mcdonald burger qpc',257,14.9,20.8,12.9,'202 g (1 burger)'),
+FF('McDouble','McDonald\'s','mcdonalds mcdonald burger',250,13.8,20.6,12.5,'160 g (1 burger)'),
+FF('McChicken','McDonald\'s','mcdonalds mcdonald sandwich',272,9.5,26.5,14.3,'147 g (1 sandwich)'),
+FF('Chicken McNuggets (10 pc)','McDonald\'s','mcdonalds mcdonald nuggets',256,14.4,15.6,15.0,'160 g (10 pieces)'),
+FF('Fries (medium)','McDonald\'s','mcdonalds mcdonald french fries',288,4.5,38.7,13.5,'111 g (1 medium)'),
+FF('Egg McMuffin','McDonald\'s','mcdonalds mcdonald breakfast sandwich',223,12.2,21.6,9.4,'139 g (1 sandwich)'),
+FF('Chicken Sandwich','Chick-fil-A','chick fil a chickfila cfa sandwich',230,15.3,22.4,9.8,'183 g (1 sandwich)'),
+FF('Grilled Chicken Sandwich','Chick-fil-A','chick fil a chickfila cfa',177,12.7,20.0,5.5,'220 g (1 sandwich)'),
+FF('Nuggets (8 pc)','Chick-fil-A','chick fil a chickfila cfa',221,23.9,9.7,9.7,'113 g (8 pieces)'),
+FF('Grilled Nuggets (8 pc)','Chick-fil-A','chick fil a chickfila cfa',115,22.1,0.9,2.7,'113 g (8 pieces)'),
+FF('Waffle Fries (medium)','Chick-fil-A','chick fil a chickfila cfa fries',336,4.0,36.0,19.2,'125 g (1 medium)'),
+FF('Chicken (4 oz)','Chipotle','chipotle bowl burrito',159,28.3,0.0,6.2,'113 g (1 serving)'),
+FF('Steak (4 oz)','Chipotle','chipotle bowl burrito',133,18.6,0.9,5.3,'113 g (1 serving)'),
+FF('Carnitas (4 oz)','Chipotle','chipotle bowl burrito pork',150,20.4,0.0,7.1,'113 g (1 serving)'),
+FF('White Rice','Chipotle','chipotle bowl burrito',131,2.5,25.0,2.5,'160 g (1 serving)'),
+FF('Black Beans','Chipotle','chipotle bowl burrito',100,6.2,16.9,1.2,'130 g (1 serving)'),
+FF('Burrito Tortilla','Chipotle','chipotle flour wrap',291,7.3,45.5,8.2,'110 g (1 tortilla)'),
+FF('Guacamole (4 oz)','Chipotle','chipotle guac',204,1.8,7.1,19.5,'113 g (1 serving)'),
+FF('Crunchy Taco','Taco Bell','taco bell tacobell beef',218,10.3,16.7,11.5,'78 g (1 taco)'),
+FF('Soft Taco (beef)','Taco Bell','taco bell tacobell',182,9.1,17.2,9.1,'99 g (1 taco)'),
+FF('Bean Burrito','Taco Bell','taco bell tacobell',177,6.6,27.3,4.5,'198 g (1 burrito)'),
+FF('Crunchwrap Supreme','Taco Bell','taco bell tacobell',209,6.3,28.0,8.3,'254 g (1 crunchwrap)'),
+FF('Chicken Quesadilla','Taco Bell','taco bell tacobell',277,14.7,20.1,14.7,'184 g (1 quesadilla)'),
+FF('Dave\'s Single','Wendy\'s','wendys wendy\'s burger',257,13.0,17.0,14.8,'230 g (1 burger)'),
+FF('Jr. Bacon Cheeseburger','Wendy\'s','wendys wendy\'s burger',245,12.9,16.8,14.8,'155 g (1 burger)'),
+FF('Spicy Chicken Sandwich','Wendy\'s','wendys wendy\'s',222,12.4,21.8,9.3,'225 g (1 sandwich)'),
+FF('Chili (small)','Wendy\'s','wendys wendy\'s',106,7.0,8.4,4.8,'227 g (1 small)'),
+FF('Fries (medium)','Wendy\'s','wendys wendy\'s french fries',296,4.2,39.4,13.4,'142 g (1 medium)'),
+FF('Turkey Sub (6 in)','Subway','subway sandwich',128,8.2,21.0,1.6,'219 g (1 six-inch)'),
+FF('Italian BMT (6 in)','Subway','subway sandwich',167,8.2,19.3,6.9,'233 g (1 six-inch)'),
+FF('Meatball Marinara (6 in)','Subway','subway sandwich',138,6.4,19.0,4.5,'311 g (1 six-inch)'),
+FF('Double-Double','In-N-Out','in n out innout in-n-out burger',203,11.2,11.8,12.4,'330 g (1 burger)'),
+FF('Cheeseburger','In-N-Out','in n out innout in-n-out burger',179,8.2,14.6,10.1,'268 g (1 burger)'),
+FF('Chicken Sandwich','Popeyes','popeyes fried',281,11.2,20.1,16.9,'249 g (1 sandwich)'),
+FF('Chicken Tenders (3 pc)','Popeyes','popeyes',262,20.6,15.3,12.4,'170 g (3 tenders)'),
+FF('Original Recipe Breast','KFC','kfc kentucky fried chicken',241,24.1,6.8,13.0,'162 g (1 breast)'),
+FF('Whopper','Burger King','burger king bk',231,9.7,16.9,13.8,'290 g (1 burger)'),
+FF('Pepperoni Pizza (1 lg slice)','Pizza','dominos pizza hut slice',273,10.9,30.9,11.8,'110 g (1 slice)'),
+FF('Cheese Pizza (1 lg slice)','Pizza','dominos pizza hut slice',257,10.5,32.4,9.5,'105 g (1 slice)'),
+FF('Orange Chicken','Panda Express','panda express chinese',304,15.5,31.7,14.3,'161 g (1 serving)'),
+FF('Chow Mein','Panda Express','panda express chinese noodles',194,4.9,30.4,7.6,'263 g (1 serving)'),
+FF('Fried Rice','Panda Express','panda express chinese',202,4.3,33.1,6.2,'257 g (1 serving)')];
+// token match with light plural stemming ("eggs" matches "egg")
+function tokHit(txt,t){return txt.includes(t)||(t.endsWith('s')&&txt.includes(t.slice(0,-1)));}
+function matchCommon(toks){return COMMON_FOODS.concat(FAST_FOODS).filter(f=>{const txt=(f.product_name+' '+f.tags).toLowerCase();return toks.every(t=>tokHit(txt,t));});}
+// Normalize API products: kJ→kcal when kcal missing, brands array→string
+function normFood(p){
+  const n=p.nutriments||{};
+  if(!n['energy-kcal_100g']){const kj=n['energy-kj_100g']||n['energy_100g'];if(kj)n['energy-kcal_100g']=Math.round(kj/4.184);}
+  if(Array.isArray(p.brands))p.brands=p.brands.join(', ');
+  p.nutriments=n;return p;
+}
+// Rank API hits: name-token matches first, products with real data first,
+// drop zero-relevance noise (mayonnaise-for-"eggs") when better hits exist
+function rankFood(items,ql,toks){
+  const scored=items.map((p,i)=>{
+    const n=String(p.product_name||'').toLowerCase();
+    const b=(Array.isArray(p.brands)?p.brands.join(' '):String(p.brands||'')).toLowerCase();
+    // relevance = query tokens actually found in name or brand
+    let tok=toks.filter(t=>tokHit(n,t)||tokHit(b,t)).length*10;
+    if(n===ql)tok+=60;else if(n.startsWith(ql))tok+=25;else if(n.includes(ql))tok+=15;
+    // data quality is only a tiebreaker, never relevance
+    const nu=p.nutriments||{};
+    let bonus=0;
+    if(nu['energy-kcal_100g']||nu['energy-kj_100g']||nu['energy_100g'])bonus+=12;
+    if(nu['proteins_100g']!=null)bonus+=4;
+    return{p,tok,s:tok+bonus-i*0.01};
+  });
+  const relevant=scored.filter(x=>x.tok>0);
+  return(relevant.length?relevant:scored).sort((a,b)=>b.s-a.s).map(x=>x.p);
+}
 function renderFoodSearch(){
   const b=document.getElementById('b-food-search');if(!b)return;
   const hasBD='BarcodeDetector' in window;
@@ -1728,21 +1856,40 @@ function renderFoodSearch(){
       <button class="btn btn-p" style="margin-top:14px;" onclick="logManualMeal()">Add to Log</button>
     </div>`;
 }
+async function fetchJSON(url,ms){
+  const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);
+  try{const r=await fetch(url,{signal:c.signal});return await r.json();}finally{clearTimeout(t);}
+}
 async function doFoodSearch(){
   const q=document.getElementById('food-q')?.value?.trim();if(!q)return;
   const res=document.getElementById('food-results');
-  res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);">Searching…</div>';
+  const seq=++_searchSeq;
+  const ql=q.toLowerCase(),toks=ql.split(/\s+/).filter(Boolean);
+  // Staples match instantly — no network needed for the common stuff
+  const local=matchCommon(toks);
+  if(local.length)showFoodResults(local.slice());
+  else res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);">Searching…</div>';
+  // Primary: current OFF search service. (The legacy cgi/search.pl endpoint
+  // now hangs for minutes — it is fallback only, with a hard timeout.)
+  let hits=null;
   try{
-    const r=await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&action=process&json=1&page_size=20&fields=product_name,nutriments,brands,serving_size`);
-    const data=await r.json();
-    showFoodResults(data.products||[]);
-  }catch(e){res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);">Search failed. Check your connection.</div>';}
+    const d=await fetchJSON(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=20&fields=product_name,nutriments,brands,serving_size`,8000);
+    if(d&&Array.isArray(d.hits))hits=d.hits;
+  }catch(e){}
+  if(!hits){
+    try{
+      const d=await fetchJSON(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&action=process&json=1&page_size=20&fields=product_name,nutriments,brands,serving_size`,10000);
+      if(d&&Array.isArray(d.products))hits=d.products;
+    }catch(e){}
+  }
+  if(seq!==_searchSeq)return; // a newer search superseded this one
+  if(hits)showFoodResults(local.concat(rankFood(hits,ql,toks)).slice(0,30));
+  else if(!local.length)res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);">Database isn\'t responding right now. Log the food manually below — it takes 10 seconds.</div>';
 }
 async function lookupBarcode(code){
   toast('Looking up product…');
   try{
-    const r=await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json?fields=product_name,nutriments,brands,serving_size`);
-    const data=await r.json();
+    const data=await fetchJSON(`https://world.openfoodfacts.org/api/v0/product/${code}.json?fields=product_name,nutriments,brands,serving_size`,10000);
     if(data.status===1&&data.product){showFoodResults([data.product]);toast('Product found!');}
     else{toast('Not in database — try searching by name');const fq=document.getElementById('food-q');if(fq)fq.value=code;}
   }catch(e){toast('Lookup failed');}
@@ -1750,7 +1897,7 @@ async function lookupBarcode(code){
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function showFoodResults(products){
   const res=document.getElementById('food-results');if(!res)return;
-  _foodResults=products.filter(p=>p.product_name);
+  _foodResults=products.filter(p=>p&&p.product_name).map(normFood);
   if(!_foodResults.length){res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text2);">No results found. Try a different search or log manually below.</div>';return;}
   res.innerHTML=_foodResults.map((p,i)=>{
     const n=p.nutriments||{};
