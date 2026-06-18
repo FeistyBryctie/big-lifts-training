@@ -525,7 +525,7 @@ function startProgramDay(i){
   if(AW&&!confirm('A workout is in progress. Discard it and start a new one?'))return;
   const DN=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   AW={id:'p_'+i+'_'+Date.now(),name:(S.program.name||'Program')+' — '+(d.focus||DN[i]),
-      exs:d.exercises.map(e=>({...e,plan:+e.sets||3,sets:[]})),t0:Date.now(),progDay:i};
+      exs:d.exercises.map(e=>({...e,cardio:e.cardio||e.type==='cardio'||d.type==='cardio',plan:+e.sets||3,sets:[]})),t0:Date.now(),progDay:i};
   ensureAudio();persistAW();push('workout');renderWorkout();startWoTimer();
 }
 function startWoTimer(){
@@ -542,7 +542,7 @@ function completeSet(ei,si){
   if(!AW)return;
   ensureAudio();
   const ex=AW.exs[ei];
-  const isCardio=!!(ex.cardio||ex.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(ex.name));
+  const isCardio=!!(ex.cardio||ex.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(ex.name));
   const wRaw=String(document.getElementById('w_'+ei+'_'+si)?.value??'');
   const r=parseFloat(document.getElementById('r_'+ei+'_'+si)?.value)||0;
   const w=wRaw.trim()===''?NaN:parseFloat(wRaw);
@@ -550,7 +550,7 @@ function completeSet(ei,si){
   AW.exs[ei].sets[si]={w,r,done:true};
   const key=ex.name.toLowerCase();
   let newPR=false;
-  if(!isCardio&&w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString();};}
+  if(!isCardio&&w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString()};}
   save();persistAW();renderWorkout();
   if(newPR)toast('New PR — '+ex.name+' '+w+' lbs');
   if(navigator.vibrate)try{navigator.vibrate(20);}catch(e){}
@@ -589,7 +589,7 @@ function finishWorkout(){
   clearInterval(woTick);clearInterval(restTick);skipRest();
   const dur=Math.floor((Date.now()-AW.t0)/1000);
   const wType=AW.progDay!=null?(S.program?.week?.[AW.progDay]?.type||'workout'):'workout';
-  const exDetail=AW.exs.map(e=>({name:e.name,sets:e.sets.filter(s=>s?.done),cardio:!!(e.cardio||e.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(e.name))}));
+  const exDetail=AW.exs.map(e=>({name:e.name,sets:e.sets.filter(s=>s?.done),cardio:!!(e.cardio||e.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(e.name))}));
   S.log.unshift({id:AW.id,name:AW.name,type:wType,date:new Date().toLocaleDateString(),dur,sets,exercises:exDetail,ts:Date.now()});
   if(S.log.length>300)S.log=S.log.slice(0,300);
   checkStreak();awardXP(sets*5+10);
@@ -1347,7 +1347,7 @@ function renderWorkout(){
   b.innerHTML=AW.exs.map((ex,ei)=>{
     const pr=S.prs[ex.name.toLowerCase()];
     const ns=Math.max(+ex.plan||3,ex.sets.length);
-    const isCardio=!!(ex.cardio||ex.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(ex.name));
+    const isCardio=!!(ex.cardio||ex.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(ex.name));
     const rows=Array.from({length:ns},(_,si)=>{
       const done=AW.exs[ei].sets[si]?.done;
       return`<div class="set-row"><div class="set-num ${done?'done':''}">${done?'✓':si+1}</div>
@@ -1622,6 +1622,24 @@ function getTodayMacros(){
 function getTodayMeals(){
   const t=new Date().toLocaleDateString();return(S.meals||[]).filter(m=>m.date===t);
 }
+// Recent / "My Foods" — distinct foods you've logged before (incl. manual
+// entries), newest first, so repeat items are one tap away regardless of
+// what the food database knows.
+function recentFoods(){
+  const seen=new Set(),out=[];
+  for(const m of (S.meals||[])){
+    const key=(m.name||'').trim().toLowerCase();
+    if(!key||seen.has(key))continue;
+    seen.add(key);out.push(m);
+    if(out.length>=12)break;
+  }
+  return out;
+}
+function logRecent(i){
+  const r=recentFoods()[i];if(!r)return;
+  addMealEntry({name:r.name,grams:r.grams,cals:r.cals||0,protein:r.protein||0,carbs:r.carbs||0,fat:r.fat||0});
+  pop();toast('✓ Added '+r.name);
+}
 function addMealEntry(meal){
   if(!S.meals)S.meals=[];
   S.meals.unshift({id:'m_'+Date.now(),date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),...meal});
@@ -1806,9 +1824,71 @@ FF('Cheese Pizza (1 lg slice)','Pizza','dominos pizza hut slice',257,10.5,32.4,9
 FF('Orange Chicken','Panda Express','panda express chinese',304,15.5,31.7,14.3,'161 g (1 serving)'),
 FF('Chow Mein','Panda Express','panda express chinese noodles',194,4.9,30.4,7.6,'263 g (1 serving)'),
 FF('Fried Rice','Panda Express','panda express chinese',202,4.3,33.1,6.2,'257 g (1 serving)')];
+// ── BEVERAGES, ENERGY DRINKS & SUPPLEMENTS ─────────────────────────────
+// Published per-serving macros stored per-100g so they flow through the same
+// portion pipeline; serving_size carries the real serving weight (~1g per ml
+// for drinks) so the portion prompt prefills exactly one serving.
+const BV=(n,brand,tags,g,label,kc,p,c,f)=>({product_name:n,brands:brand,serving_size:g+' g ('+label+')',tags:tags,
+  nutriments:{'energy-kcal_100g':kc*100/g,'proteins_100g':p*100/g,'carbohydrates_100g':c*100/g,'fat_100g':f*100/g}});
+const SUPP_FOODS=[
+// Energy drinks
+BV('Energy Drink','Bloom Nutrition','bloom sparkling energy drink',355,'12 fl oz can',15,0,5,0),
+BV('Greens & Superfoods','Bloom Nutrition','bloom greens superfood powder',6,'1 scoop',30,1,5,0),
+BV('Energy Drink','Celsius','celsius energy drink',355,'12 fl oz can',10,0,2,0),
+BV('Energy Drink','Alani Nu','alani nu energy drink',355,'12 fl oz can',10,0,2,0),
+BV('Energy Drink','Prime','prime energy drink',355,'12 fl oz can',10,0,2,0),
+BV('Fuel Energy Drink','Ryse','ryse fuel energy drink',355,'12 fl oz can',15,0,4,0),
+BV('Energy Drink','Monster','monster energy drink',473,'16 fl oz can',210,0,54,0),
+BV('Zero Ultra Energy','Monster','monster zero ultra energy drink sugar free',473,'16 fl oz can',10,0,3,0),
+BV('Energy Drink','Red Bull','red bull energy drink',250,'8.4 fl oz can',110,1,27,0),
+BV('Sugarfree Energy','Red Bull','red bull sugarfree energy drink',250,'8.4 fl oz can',10,1,3,0),
+BV('Energy Drink','Ghost','ghost energy drink',473,'16 fl oz can',5,0,1,0),
+BV('Energy Drink','C4','c4 cellucor energy drink',473,'16 fl oz can',0,0,0,0),
+BV('Energy Drink','Reign','reign total body fuel energy drink',473,'16 fl oz can',10,0,3,0),
+BV('Energy Drink','Bang','bang energy drink',473,'16 fl oz can',0,0,0,0),
+// Hydration & sports drinks
+BV('Sparkling Water','Liquid Death','liquid death mountain sparkling water',500,'16.9 fl oz can',0,0,0,0),
+BV('Iced Tea','Liquid Death','liquid death iced tea',555,'19.2 fl oz can',20,0,5,0),
+BV('Hydration Drink','Prime','prime hydration drink',500,'16.9 fl oz bottle',20,0,5,0),
+BV('Thirst Quencher','Gatorade','gatorade sports drink',591,'20 fl oz bottle',140,0,36,0),
+BV('Zero Sugar','Gatorade','gatorade zero sugar sports drink',591,'20 fl oz bottle',5,0,1,0),
+BV('Sports Drink','Powerade','powerade sports drink',591,'20 fl oz bottle',150,0,38,0),
+BV('Sports Drink','BODYARMOR','bodyarmor body armor sports drink',473,'16 fl oz bottle',90,0,21,0),
+BV('Hydration Multiplier','Liquid I.V.','liquid iv hydration multiplier electrolyte',16,'1 stick',45,0,11,0),
+BV('Electrolyte Mix','LMNT','lmnt electrolyte hydration',6,'1 packet',10,0,2,0),
+// Protein shakes (ready to drink)
+BV('Protein Milkshake','Nurri','nurri protein milkshake latte shake',330,'330 ml bottle',175,30,8,3),
+BV('Core Power 26g Protein Shake','Fairlife','fairlife core power protein shake',414,'14 fl oz bottle',170,26,8,4.5),
+BV('Core Power Elite 42g Protein Shake','Fairlife','fairlife core power elite protein shake',414,'14 fl oz bottle',230,42,9,3.5),
+BV('Nutrition Plan 30g Protein Shake','Fairlife','fairlife nutrition plan protein shake',325,'11 fl oz bottle',150,30,3,1.5),
+BV('2% Ultra-Filtered Milk','Fairlife','fairlife milk 2 percent ultra filtered',240,'1 cup',120,13,6,4.5),
+BV('Fat Free Milk','Fairlife','fairlife milk fat free skim nonfat',240,'1 cup',80,13,6,0),
+BV('Protein Shake','Premier Protein','premier protein shake',325,'11 fl oz bottle',160,30,5,3),
+BV('Protein Shake','Muscle Milk','muscle milk protein shake',414,'14 fl oz bottle',150,25,9,4.5),
+BV('Plant Protein Shake','OWYN','owyn plant based protein shake',355,'12 fl oz bottle',180,20,12,7),
+// Protein powders
+BV('Loaded Protein','Ryse','ryse loaded protein powder whey',46,'1 scoop',150,25,6,2.5),
+BV('Gold Standard Whey','Optimum Nutrition','optimum nutrition on gold standard whey protein powder',31,'1 scoop',120,24,3,1.5),
+BV('Protein Powder','Quest','quest protein powder whey',31,'1 scoop',100,21,4,1),
+BV('Whey Protein','Ghost','ghost whey protein powder',38,'1 scoop',130,25,4,2.5),
+BV('ISO100 Whey Isolate','Dymatize','dymatize iso100 whey isolate protein powder',32,'1 scoop',120,25,2,0.5),
+// Protein bars
+BV('Protein Bar','Quest','quest protein bar',60,'1 bar',190,21,22,8),
+BV('Protein Bar','RXBAR','rxbar protein bar',52,'1 bar',210,12,24,9),
+BV('Protein Bar','Built Bar','built bar protein bar',49,'1 bar',130,17,18,4),
+BV('Protein Bar','Pure Protein','pure protein bar',50,'1 bar',200,20,17,6),
+// Milk alternatives & coffee
+BV('Unsweetened Almond Milk','Almond Breeze','almond milk unsweetened',240,'1 cup',30,1,1,2.5),
+BV('Oat Milk','Oatly','oat milk oatly',240,'1 cup',120,3,16,5),
+BV('Soy Milk','Silk','soy milk',240,'1 cup',100,7,8,4),
+BV('Black Coffee','Coffee','coffee black brewed',240,'1 cup',2,0.3,0,0),
+// Sodas
+BV('Coca-Cola','Coca-Cola','coke coca cola soda',368,'12 fl oz can',140,0,39,0),
+BV('Diet Coke','Coca-Cola','diet coke soda zero sugar',355,'12 fl oz can',0,0,0,0),
+BV('Sprite','Sprite','sprite lemon lime soda',368,'12 fl oz can',140,0,38,0)];
 // token match with light plural stemming ("eggs" matches "egg")
 function tokHit(txt,t){return txt.includes(t)||(t.endsWith('s')&&txt.includes(t.slice(0,-1)));}
-function matchCommon(toks){return COMMON_FOODS.concat(FAST_FOODS).filter(f=>{const txt=(f.product_name+' '+f.tags).toLowerCase();return toks.every(t=>tokHit(txt,t));});}
+function matchCommon(toks){return COMMON_FOODS.concat(FAST_FOODS).concat(SUPP_FOODS).filter(f=>{const txt=(f.product_name+' '+(f.brands||'')+' '+f.tags).toLowerCase();return toks.every(t=>tokHit(txt,t));});}
 // Normalize API products: kJ→kcal when kcal missing, brands array→string
 function normFood(p){
   const n=p.nutriments||{};
@@ -1838,15 +1918,18 @@ function rankFood(items,ql,toks){
 function renderFoodSearch(){
   const b=document.getElementById('b-food-search');if(!b)return;
   const hasBD='BarcodeDetector' in window;
+  const _rf=recentFoods();
+  const recentHTML=_rf.length?`<div style="padding:14px 16px 6px;"><div class="sec-title">Recent</div></div><div class="card" style="margin:0 16px;">`+_rf.map((m,i)=>`<div class="food-item" onclick="logRecent(${i})"><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;">${esc(m.name)}</div><div class="food-macros">${m.cals||0} cal · ${m.protein||0}g P · ${m.carbs||0}g C · ${m.fat||0}g F${m.grams?' · '+m.grams+'g':''}</div></div><div style="color:var(--text3);padding-left:8px;font-size:20px;line-height:1;">+</div></div>`).join('')+`</div>`:'';
   b.innerHTML=`
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
       <div style="display:flex;gap:8px;">
         <input id="food-q" class="input" placeholder="Search food or brand…" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')doFoodSearch()">
-        ${hasBD?`<button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Scan barcode"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>`:''}
+        <button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Scan or enter barcode"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
         <button onclick="doFoodSearch()" style="background:var(--text);color:var(--bg);border:none;padding:0 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;height:42px;flex-shrink:0;">Search</button>
       </div>
-      ${!hasBD?'<div style="font-size:11px;color:var(--text3);margin-top:8px;">Barcode scanning available in Chrome/Android</div>':''}
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">${hasBD?'Tap the barcode icon to scan a product':'No camera scanner on this browser — tap the barcode icon to type a barcode number'}</div>
     </div>
+    ${recentHTML}
     <div style="padding:10px 16px 6px;font-size:11px;color:var(--text3);">Powered by Open Food Facts · Per 100g unless noted</div>
     <div id="food-results"></div>
     <!-- Manual log -->
