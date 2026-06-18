@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Big Lifts">
@@ -132,6 +132,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
 .rest-pre{padding:4px 12px;border-radius:6px;background:var(--s2);border:none;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;}
 .wo-hd{padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
 .wo-finish{padding:7px 18px;border-radius:8px;background:var(--green);color:#000;font-size:13px;font-weight:700;border:none;cursor:pointer;}
+.wo-footer{padding:10px 16px;padding-bottom:calc(10px + var(--safe-bot));border-top:1px solid var(--border);flex-shrink:0;background:var(--bg);}
+.wo-finish-large{width:100%;padding:15px;border-radius:12px;background:var(--green);color:#000;font-size:16px;font-weight:700;border:none;cursor:pointer;}
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:200;display:none;align-items:flex-end;}
 .modal-ov.show{display:flex;}
 .modal{background:var(--s1);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + var(--safe-bot));width:100%;max-height:88vh;overflow-y:auto;}
@@ -185,7 +187,6 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
 .pr-name{flex:1;font-size:15px;font-weight:500;}
 .pr-val{font-size:22px;font-weight:700;letter-spacing:-.5px;}
 .pr-unit{font-size:12px;color:var(--text2);margin-left:3px;}
-
 .ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .ach-tile{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;}
 .ach-tile.done{border-color:rgba(255,255,255,0.15);}
@@ -250,7 +251,17 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
       </div>
       <div id="coach-messages"></div>
       <div class="chips" id="coach-chips"></div>
+      <div id="coach-img-preview" style="display:none;padding:8px 16px 0;border-top:1px solid var(--border);background:var(--bg);">
+        <div style="position:relative;display:inline-block;">
+          <img id="coach-img-thumb" style="max-height:64px;max-width:200px;border-radius:8px;display:block;">
+          <button onclick="clearCoachImage()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--text3);border:none;color:var(--bg);font-size:13px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+      </div>
       <div class="coach-bar">
+        <input type="file" id="coach-img-input" accept="image/*" style="display:none" onchange="handleCoachImage(this)">
+        <button onclick="document.getElementById('coach-img-input').click()" style="width:38px;height:38px;border-radius:50%;background:var(--s2);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
         <textarea class="coach-input" id="coach-input" placeholder="Ask your coach..." rows="1"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
           oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
@@ -287,10 +298,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
           <div style="font-weight:600;font-size:16px;" id="wo-name">Workout</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px;" id="wo-timer">0:00</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button onclick="discardAW()" style="width:32px;height:32px;border-radius:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer;">&#10005;</button>
-          <button class="wo-finish" onclick="finishWorkout()">Finish</button>
-        </div>
+        <button onclick="discardAW()" style="width:32px;height:32px;border-radius:8px;background:var(--s2);border:1px solid var(--border);color:var(--text2);font-size:14px;cursor:pointer;">&#10005;</button>
       </div>
       <div class="rest-bar" id="rest-bar">
         <div class="rest-time" id="rest-display">1:30</div>
@@ -303,6 +311,7 @@ html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:v
         </div>
       </div>
       <div class="screen-body" id="b-workout"></div>
+      <div class="wo-footer"><button class="wo-finish-large" onclick="finishWorkout()">Finish Workout</button></div>
     </div>
     <div class="screen" id="s-log">
       <div class="screen-header">
@@ -445,7 +454,6 @@ let S=(()=>{const hydrate=raw=>{const d=def(),p=JSON.parse(raw),s=Object.assign(
   try{const b=localStorage.getItem(DB+'_bk');if(b)return hydrate(b);}catch(e){}
   return def();})();
 let CH=(()=>{try{const r=localStorage.getItem(CK);if(r)return JSON.parse(r);}catch(e){}return[];})();
-
 let _saveWarned=false;
 function save(){
   let okMain=true;
@@ -459,14 +467,12 @@ function save(){
 ['pagehide','beforeunload'].forEach(e=>window.addEventListener(e,save));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save();});
 setInterval(save,15000);
-
 // IDB
 const IDB={db:null,
   open(){return new Promise((res,rej)=>{const r=indexedDB.open('BLV2',1);r.onupgradeneeded=e=>e.target.result.createObjectStore('d',{keyPath:'k'});r.onsuccess=e=>{this.db=e.target.result;res();};r.onerror=rej;});},
   async save(data){if(!this.db)await this.open().catch(()=>{});if(!this.db)return;try{const tx=this.db.transaction('d','readwrite');tx.objectStore('d').put({k:'m',v:data,ts:Date.now()});}catch(e){}},
   async load(){if(!this.db)await this.open().catch(()=>{});if(!this.db)return null;return new Promise(res=>{try{const tx=this.db.transaction('d','readonly'),r=tx.objectStore('d').get('m');r.onsuccess=()=>res(r.result?.v||null);r.onerror=()=>res(null);}catch(e){res(null);}});}
 };
-
 // XP — 20 defined levels, extrapolates beyond. Curve tuned so ~100 XP/workout
 // reaches L5 in ~2wks, L10 in ~2mo, L20 (max defined) in ~1.5yrs of 4x/week.
 const LVL=[0,100,250,450,700,1000,1400,1900,2500,3300,4300,5500,7000,8800,11000,13600,16700,20400,24800,30000];
@@ -480,14 +486,12 @@ function awardXP(n){
   checkAchievements();save();
 }
 function xpPct(){const c=xpForLvl(S.level),nx=xpForLvl(S.level+1);return Math.min(1,(S.xp-c)/(nx-c));}
-
 function checkStreak(){
   const t=new Date().toLocaleDateString(),y=new Date(Date.now()-86400000).toLocaleDateString();
   if(S.lastLog===y)S.streak++;else if(S.lastLog!==t)S.streak=1;
   S.lastLog=t;
 }
 function curStreak(){const t=new Date().toLocaleDateString(),y=new Date(Date.now()-86400000).toLocaleDateString();return(S.lastLog===t||S.lastLog===y)?S.streak:0;}
-
 function exportData(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify({s:S,ch:CH,_v:2,_d:new Date().toISOString()},null,2)],{type:'application/json'}));
@@ -510,7 +514,6 @@ function restoreAW(){try{const r=localStorage.getItem(AWK);if(!r)return;const a=
 function resumeAW(){if(!AW)return;push('workout');renderWorkout();startWoTimer();}
 function discardAW(){if(!confirm('Discard this workout? Nothing will be logged.'))return;clearInterval(woTick);clearInterval(restTick);skipRest();AW=null;persistAW();if(stack[stack.length-1]==='workout')exitWorkout();renderToday();toast('Workout discarded');}
 function exitWorkout(){if(stack.length>1)pop();else go('today');}
-
 function startWorkout(id){
   const w=S.workouts.find(x=>x.id===id);if(!w)return;
   if(AW&&!confirm('A workout is in progress. Discard it and start a new one?'))return;
@@ -538,14 +541,16 @@ function startWoTimer(){
 function completeSet(ei,si){
   if(!AW)return;
   ensureAudio();
+  const ex=AW.exs[ei];
+  const isCardio=!!(ex.cardio||ex.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(ex.name));
   const wRaw=String(document.getElementById('w_'+ei+'_'+si)?.value??'');
-  const r=parseInt(document.getElementById('r_'+ei+'_'+si)?.value)||0;
+  const r=parseFloat(document.getElementById('r_'+ei+'_'+si)?.value)||0;
   const w=wRaw.trim()===''?NaN:parseFloat(wRaw);
-  if(isNaN(w)||w<0||!r){toast('Enter weight (0 for bodyweight) and reps');return;}
+  if(isNaN(w)||(!isCardio&&w<0)||(isCardio&&w<=0)||!r){toast(isCardio?'Enter distance (miles) and duration (min)':'Enter weight (0 for bodyweight) and reps');return;}
   AW.exs[ei].sets[si]={w,r,done:true};
-  const ex=AW.exs[ei],key=ex.name.toLowerCase();
+  const key=ex.name.toLowerCase();
   let newPR=false;
-  if(w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString()};}
+  if(!isCardio&&w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString();};}
   save();persistAW();renderWorkout();
   if(newPR)toast('New PR — '+ex.name+' '+w+' lbs');
   if(navigator.vibrate)try{navigator.vibrate(20);}catch(e){}
@@ -584,7 +589,7 @@ function finishWorkout(){
   clearInterval(woTick);clearInterval(restTick);skipRest();
   const dur=Math.floor((Date.now()-AW.t0)/1000);
   const wType=AW.progDay!=null?(S.program?.week?.[AW.progDay]?.type||'workout'):'workout';
-  const exDetail=AW.exs.map(e=>({name:e.name,sets:e.sets.filter(s=>s?.done)}));
+  const exDetail=AW.exs.map(e=>({name:e.name,sets:e.sets.filter(s=>s?.done),cardio:!!(e.cardio||e.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(e.name))}));
   S.log.unshift({id:AW.id,name:AW.name,type:wType,date:new Date().toLocaleDateString(),dur,sets,exercises:exDetail,ts:Date.now()});
   if(S.log.length>300)S.log=S.log.slice(0,300);
   checkStreak();awardXP(sets*5+10);
@@ -635,7 +640,6 @@ const TOOLS=[
      exercise:{type:'string'},weight:{type:'number'},reps:{type:'integer'}
    }}}
 ];
-
 function runTool(name,input){
   if(name==='save_program'){
     input.week=input.week.map(d=>({...d,exercises:(d.exercises||[]).filter(e=>e.name&&!e.name.toUpperCase().includes('SUPPLEMENT')&&!e.name.toUpperCase().includes('VITAMIN'))}));
@@ -645,7 +649,6 @@ function runTool(name,input){
   if(name==='log_pr'){const k=input.exercise.toLowerCase();S.prs[k]={name:input.exercise,weight:input.weight,reps:input.reps||1,date:new Date().toLocaleDateString()};save();renderStats();return`PR: ${input.exercise} ${input.weight}lbs`;}
   return'ok';
 }
-
 function getSys(){
   const prs=Object.values(S.prs).slice(0,10).map(p=>`${p.name}:${p.weight}lbs×${p.reps||1}`).join(', ')||'none';
   const ci=S.checkins[0];
@@ -659,7 +662,6 @@ function getSys(){
   const waterCtx=todayWater>0?`Water today: ${todayWater}oz of ${S.waterGoal||64}oz goal.`:'No water logged today.';
   const wtCtx=recentWt.length?`Recent weights: ${recentWt.join(', ')}.`:'';
   const athleteCtx=`Athlete: ${S.name||'Bryce'} | App Level ${S.level} | ${curStreak()}-day training streak | Total sessions: ${S.log.length} | PRs: ${prs} | Check-in: ${ciStr} | ${prog} | ${wtCtx}`;
-
   const knowledgeBase=`
 TRAINING SCIENCE:
 - Progressive overload: increase weight 5lbs upper/10lbs lower when hitting top of rep range
@@ -672,7 +674,6 @@ TRAINING SCIENCE:
 - Periodization: linear (beginners), undulating (intermediate), block (advanced)
 - Compound priority: squat, deadlift, bench, overhead press, row — these drive 80% of gains
 - Tempo: 2-0-2 standard; eccentric (lowering) causes most muscle damage and growth
-
 NUTRITION SCIENCE (give real numbers, not vague guidance):
 - TDEE estimation: bodyweight × 14-16 (sedentary to very active). Cutting: -300-500 cal/day. Bulking: +200-400 cal/day. Recomp: maintenance
 - Protein: 0.7-1g per lb bodyweight for muscle gain/retention. Leucine threshold: 2.5-3g per meal triggers MPS. Distribute across 3-5 meals
@@ -682,14 +683,12 @@ NUTRITION SCIENCE (give real numbers, not vague guidance):
 - Bulking: 0.25-0.5lb gain/week (minimize fat). Cutting: 0.5-1lb loss/week (preserve muscle with high protein + resistance training)
 - Fiber: 25-35g/day for gut health and satiety
 - Refeeds: 1-2 high-carb days/week during extended cuts replenish leptin and glycogen
-
 HYDRATION:
 - Target: 0.5-1oz per lb bodyweight. Minimum 64oz/day. During training: +16-24oz per hour
 - Signs of dehydration affect performance: 2% loss = 5-10% strength reduction
 - Electrolytes: sodium (1500-2300mg/day, more if heavy sweater), potassium (3500mg), magnesium (400-420mg men)
 - Timing: 16oz upon waking, 16oz 30min before training, sip during, 20oz after
 - Creatine monohydrate increases intracellular water retention — increase water intake by 16oz/day when loading
-
 SUPPLEMENTATION (evidence-based, give dosing protocols):
 - Creatine monohydrate: 3-5g/day, any time (no loading needed). Most studied supplement, works for 70-80% of people. Expect 5-15lb strength gain in 4-8 weeks
 - Caffeine: 3-6mg/kg bodyweight 30-45min pre-workout. Tolerance break every 4-6 weeks. Don't take after 2pm if sleep is a priority
@@ -700,7 +699,6 @@ SUPPLEMENTATION (evidence-based, give dosing protocols):
 - Vitamin D3+K2: 2000-5000 IU/day, especially in winter. Critical for testosterone, immune function, bone density
 - Fish oil (Omega-3): 2-3g EPA+DHA/day. Reduces inflammation, improves muscle protein synthesis
 - Ashwagandha KSM-66: 300-600mg/day. Reduces cortisol, may increase testosterone. Works best under high stress load
-
 RECOVERY SCIENCE:
 - Sleep: 7-9hrs is non-negotiable. GH release peaks during slow-wave sleep (first 2hrs). Restrict blue light 1hr before bed. Keep room 65-68°F
 - Sleep deprivation effects: <6hrs = 10-15% reduction in strength, elevated cortisol, impaired glucose metabolism
@@ -710,29 +708,23 @@ RECOVERY SCIENCE:
 - Sauna: 15-20min at 176°F post-workout enhances GH response, reduces cortisol, improves cardiovascular adaptations
 - Deload signs: performance plateau 2+ weeks, chronic joint pain, sleep disruption, mood decline, elevated resting HR
 - Overtraining syndrome: rare but real. Requires 2-4 week full deload. Different from normal fatigue
-
 BODY COMPOSITION:
 - Body fat measurement: calipers or DEXA most accurate. Scale weight fluctuates ±3-5lbs daily (water, food, glycogen)
 - Muscle gain timeline: 1-2lbs/month in first year, 0.5-1lb/month thereafter (natural)
 - Fat loss: 0.5-1% bodyweight/week sustainable. Faster = muscle loss risk
 - Visible abs: typically 10-12% BF for men, 18-22% for women. Don't sacrifice performance chasing aesthetics
 - Body recomposition (gain muscle + lose fat simultaneously): possible for beginners and those returning after a break
-
 HORMONES & PERFORMANCE:
 - Cortisol rises with overtraining, sleep deprivation, caloric deficit, stress. High cortisol = muscle catabolism, fat storage
 - Testosterone optimized by: compound lifting, adequate sleep, fat intake ≥0.3g/lb, zinc+D3, avoiding chronic cardio excess
 - Insulin sensitivity improved by: resistance training, low-glycemic diet, adequate sleep, reducing processed sugar
 - IGF-1 stimulated by: protein intake, GH (sleep-dependent), resistance training volume
-
 Always give specific numbers. Never say "adjust based on tolerance" without first giving a starting number. Be direct, actionable, and evidence-based.`;
-
   const base=`You are an elite strength and nutrition coach — the most knowledgeable, direct coach alive. You combine the programming precision of a powerlifting coach, the nutrition science of a sports dietitian, and the mentality of the hardest trainer in the gym. Zero fluff. Real numbers. Evidence-based.\n\n${knowledgeBase}\n\nATHLETE DATA: ${athleteCtx}\nNUTRITION TODAY: ${nutCtx}\nHYDRATION TODAY: ${waterCtx}`;
-
   if(S.mode==='nutrition')return base+'\n\nCurrent focus: NUTRITION. Lead with macros, meal structure, food choices, and supplement timing. Use the athlete\'s logged food data to give personalized feedback. Give meal plans with exact grams, not vague portions.';
   if(S.mode==='recovery')return base+'\n\nCurrent focus: RECOVERY. Assess the check-in scores. Address sleep, soreness, mobility, and deload needs. Give specific recovery protocols.';
   return base+'\n\nCurrent focus: TRAINING. When asked for a full week program, use save_program tool. For single workouts, use save_workout tool. Include rest times and coaching cues per exercise. Reference the athlete\'s PRs to set appropriate working weights.';
 }
-
 // Returns a slice of CH that is always valid for the API: starts on a real
 // user text turn (never an orphaned tool_result) and never ends on an
 // unmatched tool_use. Prevents 400s once history grows past the window.
@@ -750,6 +742,26 @@ function apiHistory(max=40){
   return out;
 }
 let _sending=false;
+let _pendingImage=null;
+function handleCoachImage(inp){
+  const file=inp.files[0];if(!file)return;
+  if(file.size>5242880){toast('Image too large — keep under 5MB');inp.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _pendingImage={base64:e.target.result.split(',')[1],mediaType:file.type||'image/jpeg'};
+    const thumb=document.getElementById('coach-img-thumb');
+    const preview=document.getElementById('coach-img-preview');
+    if(thumb)thumb.src=e.target.result;
+    if(preview)preview.style.display='block';
+    toast('Photo attached');
+  };
+  reader.readAsDataURL(file);inp.value='';
+}
+function clearCoachImage(){
+  _pendingImage=null;
+  const p=document.getElementById('coach-img-preview');if(p)p.style.display='none';
+  const t=document.getElementById('coach-img-thumb');if(t)t.src='';
+}
 async function sendMsg(){
   if(_sending)return;
   const inp=document.getElementById('coach-input');
@@ -757,8 +769,10 @@ async function sendMsg(){
   if(!S.apiKey){const k=prompt('Enter Anthropic API key:');if(k?.trim()){S.apiKey=k.trim();save();}else return;}
   _sending=true;
   inp.value='';inp.style.height='auto';
-  addMsg('user',text);
-  CH.push({role:'user',content:text});
+  const userContent=_pendingImage?[{type:'image',source:{type:'base64',media_type:_pendingImage.mediaType,data:_pendingImage.base64}},{type:'text',text}]:text;
+  addMsg('user',userContent);
+  CH.push({role:'user',content:userContent});
+  clearCoachImage();
   let typingEl=addTyping();
   try{
     // Agentic loop: keep going while the coach calls tools, so multi-tool
@@ -784,7 +798,6 @@ async function sendMsg(){
     typingEl?.remove();save();scrollChat();
   }catch(err){typingEl?.remove();addMsg('ai','Connection error. Check your API key.');}finally{_sending=false;}
 }
-
 async function buildProgram(){
   if(!S.apiKey){const k=prompt('Enter Anthropic API key:');if(k?.trim()){S.apiKey=k.trim();save();}else return;}
   if(S.program&&!confirm('Replace your current program? This cannot be undone.'))return;
@@ -809,13 +822,20 @@ async function buildProgram(){
     else if(pb)pb.innerHTML='<div class="empty"><div class="empty-title">Build failed</div><div class="empty-sub">Try tapping "Ask Coach" on the Today screen</div></div>';
   }catch(err){if(pb)pb.innerHTML='<div class="empty"><div class="empty-title">Connection error</div></div>';}
 }
-
 function setMode(m,btn){S.mode=m;save();document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderChips();}
-
 function addMsg(role,content){
   const c=document.getElementById('coach-messages');if(!c)return;
   const el=document.createElement('div');el.className='fade-up';
-  if(role==='user'){el.className+=' msg-user';el.textContent=content;}
+  if(role==='user'){
+    el.className+=' msg-user';
+    if(typeof content==='string'){el.textContent=content;}
+    else if(Array.isArray(content)){
+      content.forEach(b=>{
+        if(b.type==='image'&&b.source?.data){const img=document.createElement('img');img.src=`data:${b.source.media_type};base64,${b.source.data}`;img.style.cssText='max-width:100%;border-radius:8px;margin-bottom:4px;display:block;';el.appendChild(img);}
+        else if(b.type==='text'&&b.text){const d=document.createElement('div');d.textContent=b.text;el.appendChild(d);}
+      });
+    }
+  }
   else{
     el.innerHTML=`<div class="msg-ai-lbl">COACH</div><div class="msg-ai-body">${fmtMsg(content)}</div>`;
     el.className='msg-ai fade-up';
@@ -884,22 +904,22 @@ function openNewWorkoutModal(){
 }
 function addExRow(){
   const c=document.getElementById('wm-rows'),r=document.createElement('div');
-  r.style.cssText='display:flex;gap:6px;margin-bottom:8px;';
+  r.style.cssText='display:flex;gap:6px;margin-bottom:8px;align-items:center;';
   r.innerHTML=`<input class="input" placeholder="Exercise" style="flex:2;padding:10px 12px;font-size:14px;">
     <input class="input" type="number" placeholder="3" style="width:48px;padding:10px 8px;font-size:14px;text-align:center;">
     <input class="input" placeholder="8-10" style="flex:1;padding:10px 8px;font-size:14px;text-align:center;">
+    <button type="button" title="Cardio (distance/time)" onclick="const on=this.parentElement.dataset.cardio!=='1';this.parentElement.dataset.cardio=on?'1':'0';this.style.background=on?'rgba(255,214,10,.2)':'var(--s3)';this.style.color=on?'var(--yellow)':'var(--text2)';" style="width:44px;height:36px;border-radius:7px;background:var(--s3);border:none;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.3px;flex-shrink:0;">Cardio</button>
     <button onclick="this.parentElement.remove()" style="width:30px;border-radius:7px;background:var(--s3);border:none;color:var(--text2);cursor:pointer;font-size:18px;flex-shrink:0;">×</button>`;
   c.appendChild(r);
 }
 function saveWM(){
   const name=document.getElementById('wm-name')?.value?.trim();if(!name){toast('Enter a name');return;}
   const rows=document.querySelectorAll('#wm-rows>div');
-  const exs=[];rows.forEach(r=>{const inp=r.querySelectorAll('input');const n=inp[0]?.value?.trim();if(n)exs.push({name:n,sets:+inp[1]?.value||3,reps:inp[2]?.value||'8-10',rest:'',note:''}); });
+  const exs=[];rows.forEach(r=>{const inp=r.querySelectorAll('input');const n=inp[0]?.value?.trim();if(n)exs.push({name:n,sets:+inp[1]?.value||3,reps:inp[2]?.value||'8-10',rest:'',note:'',cardio:r.dataset.cardio==='1'}); });
   if(!exs.length){toast('Add exercises');return;}
   saveWorkout(name,exs);closeM('m-workout');renderTrain();toast('Workout saved');
 }
 function fmtDur(s){if(!s)return'';const m=Math.floor(s/60);return m<60?m+'m':Math.floor(m/60)+'h '+(m%60)+'m';}
-
 // DAILY QUOTES
 const QUOTES=[
   // IRON GAME
@@ -1026,7 +1046,6 @@ function getDailyQuote(){
   const day=Math.floor((d-(new Date(d.getFullYear(),0,0)))/86400000);
   return QUOTES[day%QUOTES.length];
 }
-
 // ACHIEVEMENTS
 const SVG=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
 const LOCK=SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>');
@@ -1088,11 +1107,8 @@ function checkAchievements(){
   });
   if(unlockCount){renderToday();if(stack.includes('me'))renderMe();}
 }
-
 // RENDER FUNCTIONS
 function renderAll(){renderToday();if(stack.includes('train'))renderTrain();if(stack.includes('stats'))renderStats();if(stack.includes('nutrition'))renderNutrition();if(stack.includes('me'))renderMe();}
-
-
 // --- Pixel art character (ported from v1) ---
 const PAL={'.':null,'O':'#111111','k':'#f5c99a','S':'#e8a870','s':'#c07840','H':'#5c3010','L':'#8a5528','M':'#2a1004','R':'#cc1800','r':'#8a1000','G':'#ffd700','g':'#c8a000','W':'#f8f8f8','A':'#ff6600','a':'#ffdd00'};
 const BASE_SPRITE=['.......................OO.......................',
@@ -1149,10 +1165,8 @@ const BASE_SPRITE=['.......................OO.......................',
 function getSkinPal(stage){const p=[{k:'#f5c99a',S:'#e8a870',s:'#c07840'},{k:'#f5c99a',S:'#e0a060',s:'#b87030'},{k:'#f5d0a8',S:'#d89050',s:'#a86020'},{k:'#f5d0a8',S:'#d08040',s:'#984810'},{k:'#ffe8c0',S:'#d08040',s:'#904010'}];return p[Math.min(stage,4)];}
 function getSpriteStage(level){if(level>=20)return 4;if(level>=15)return 3;if(level>=10)return 2;if(level>=5)return 1;return 0;}
 function buildBryce(level){const CELL=4,COLS=48,ROWS=51,W=COLS*CELL,H=ROWS*CELL;const stage=getSpriteStage(level);const skinPal=getSkinPal(stage);const rp={...PAL,k:skinPal.k,S:skinPal.S,s:skinPal.s};const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;canvas.style.cssText=`width:${W}px;height:${H}px;image-rendering:pixelated;display:block;`;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,W,H);if(level>=10){const aOp=Math.min(0.5,(level-10)/20);const aC=level>=15?`rgba(255,220,30,${aOp})`:`rgba(255,100,20,${aOp})`;const g=ctx.createRadialGradient(W/2,H*0.55,10,W/2,H*0.55,W*0.65);g.addColorStop(0,aC);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}for(let row=0;row<ROWS;row++){const line=BASE_SPRITE[row]||'';for(let col=0;col<COLS;col++){const ch=line[col]||'.';const color=rp[ch];if(color){ctx.fillStyle=color;ctx.fillRect(col*CELL,row*CELL,CELL,CELL);}}}if(level>=20){ctx.fillStyle='#ffd700';const cp=[22,21,20,21,22,19,24,21,26,19,28,21,27,21];for(let i=0;i<cp.length-1;i+=2){ctx.fillRect(cp[i]*CELL,(1*CELL-CELL*2),CELL,CELL*2);}}const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:transform 0.2s;cursor:pointer;';wrap.onmouseenter=()=>{wrap.style.transform='scale(1.05)';};wrap.onmouseleave=()=>{wrap.style.transform='scale(1)';};canvas.style.width='112px';canvas.style.height='119px';wrap.appendChild(canvas);return wrap;}
-
 const CLASS_NAMES=['Novice','Beginner','Trainee','Apprentice','Lifter','Athlete','Competitor','Contender','Advanced','Veteran','Elite','Specialist','Master','Beast','Champion','Savage','Warrior','Legend','Titan','Immortal'];
 function getClassName(lvl){return CLASS_NAMES[Math.min((lvl||1)-1,CLASS_NAMES.length-1)];}
-
 function renderToday(){
   const b=document.getElementById('b-today');if(!b)return;
   const h=new Date().getHours(),g=h<12?'Morning':h<17?'Afternoon':'Evening';
@@ -1296,7 +1310,6 @@ function renderToday(){
     </div>`;
   const hc=document.getElementById('hero-char');if(hc)hc.appendChild(buildBryce(S.level));
 }
-
 function renderTrain(){
   const b=document.getElementById('b-train');if(!b)return;
   const progCard=S.program
@@ -1309,7 +1322,6 @@ function renderTrain(){
     <div class="section" style="margin-top:20px;"><div class="sec-header"><div class="sec-title">Workouts</div><button class="sec-action" onclick="openNewWorkoutModal()">+ New</button></div><div class="card">${wos}</div></div>
     <div class="section" style="margin-top:20px;"><div class="sec-header"><div class="sec-title">Recent Sessions</div><button class="sec-action" onclick="push('log');renderLog()">All</button></div><div class="card">${recent}</div></div>`;
 }
-
 function renderProgram(){
   const b=document.getElementById('b-program'),t=document.getElementById('prog-title');if(!b)return;
   if(!S.program){b.innerHTML='<div class="empty"><div class="empty-title">No program yet</div><div class="empty-sub">Tap Build to create your weekly training program.</div></div>';return;}
@@ -1328,7 +1340,6 @@ function renderProgram(){
   b.innerHTML=html;
 }
 function toggleDay(i){document.getElementById('dr'+i)?.classList.toggle('open');}
-
 function renderWorkout(){
   const b=document.getElementById('b-workout'),n=document.getElementById('wo-name');if(!b||!AW)return;
   if(n)n.textContent=AW.name;
@@ -1336,30 +1347,30 @@ function renderWorkout(){
   b.innerHTML=AW.exs.map((ex,ei)=>{
     const pr=S.prs[ex.name.toLowerCase()];
     const ns=Math.max(+ex.plan||3,ex.sets.length);
+    const isCardio=!!(ex.cardio||ex.type==='cardio'||/(bike|cycl|ride|run|treadmill|row|elliptical|walk|swim)/i.test(ex.name));
     const rows=Array.from({length:ns},(_,si)=>{
       const done=AW.exs[ei].sets[si]?.done;
       return`<div class="set-row"><div class="set-num ${done?'done':''}">${done?'✓':si+1}</div>
-        <input class="set-input" id="w_${ei}_${si}" type="number" inputmode="decimal" placeholder="${pr?pr.weight:'lbs'}" ${done?`value="${AW.exs[ei].sets[si].w}" readonly`:''}>
-        <span style="font-size:12px;color:var(--text3);">×</span>
-        <input class="set-input" id="r_${ei}_${si}" type="number" inputmode="numeric" placeholder="${esc(ex.reps||'reps')}" ${done?`value="${AW.exs[ei].sets[si].r}" readonly`:''}>
+        <input class="set-input" id="w_${ei}_${si}" type="number" inputmode="decimal" placeholder="${isCardio?'miles':(pr?pr.weight:'lbs')}" ${done?`value="${AW.exs[ei].sets[si].w}" readonly`:''}>
+        <span style="font-size:12px;color:var(--text3);">${isCardio?'@':'×'}</span>
+        <input class="set-input" id="r_${ei}_${si}" type="number" inputmode="decimal" placeholder="${isCardio?'min':esc(ex.reps||'reps')}" ${done?`value="${AW.exs[ei].sets[si].r}" readonly`:''}>
         ${done?'<span class="set-btn done" style="cursor:default;">✓</span>':`<button class="set-btn" onclick="completeSet(${ei},${si})">Done</button>`}
       </div>`;
     }).join('');
     return`<div style="padding:14px 20px;border-bottom:1px solid var(--border);">
-      <div style="margin-bottom:10px;"><div style="font-size:16px;font-weight:600;">${esc(ex.name)}</div>
-      ${pr?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">PR: ${pr.weight} lbs × ${pr.reps}</div>`:''}
+      <div style="margin-bottom:10px;"><div style="font-size:16px;font-weight:600;">${esc(ex.name)}${isCardio?' <span style="font-size:11px;background:rgba(255,214,10,.15);color:var(--yellow);padding:2px 7px;border-radius:5px;font-weight:600;margin-left:6px;vertical-align:middle;">CARDIO</span>':''}</div>
+      ${!isCardio&&pr?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">PR: ${pr.weight} lbs × ${pr.reps}</div>`:''}
       ${ex.note?`<div style="font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4;">${esc(ex.note)}</div>`:''}
       ${ex.rest?`<div style="font-size:12px;color:var(--text3);margin-top:2px;">Rest: ${esc(ex.rest)}</div>`:''}</div>
       <div style="display:flex;gap:8px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding-bottom:4px;">
-        <div style="width:28px;text-align:center;">Set</div><div style="flex:1;text-align:center;">Weight</div>
-        <div style="width:16px;"></div><div style="flex:1;text-align:center;">Reps</div><div style="width:60px;"></div>
+        <div style="width:28px;text-align:center;">Set</div><div style="flex:1;text-align:center;">${isCardio?'Miles':'Weight'}</div>
+        <div style="width:16px;"></div><div style="flex:1;text-align:center;">${isCardio?'Min':'Reps'}</div><div style="width:60px;"></div>
       </div>${rows}
       <button onclick="addSetRow(${ei})" style="margin-top:4px;background:none;border:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;padding:6px 0;">+ Add set</button></div>`;
   }).join('');
   Object.entries(keep).forEach(([id,v])=>{const el=document.getElementById(id);if(el&&!el.readOnly&&!el.value)el.value=v;});
 }
 function addSetRow(ei){if(!AW)return;AW.exs[ei].plan=Math.max(+AW.exs[ei].plan||3,AW.exs[ei].sets.length)+1;persistAW();renderWorkout();}
-
 function renderStats(){
   const b=document.getElementById('b-stats');if(!b)return;
   const prs=Object.values(S.prs).sort((a,z)=>a.name.localeCompare(z.name));
@@ -1425,7 +1436,6 @@ function drawWtChart(canvas,data){
     ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fill();
   });
 }
-
 function renderMe(){
   const b=document.getElementById('b-me');if(!b)return;
   const pct=Math.round(xpPct()*100);
@@ -1480,17 +1490,17 @@ function renderMe(){
     </div></div>`;
   const mc=document.getElementById('me-char');if(mc)mc.appendChild(buildBryce(S.level));
 }
-
 function renderCoach(){
   const c=document.getElementById('coach-messages');if(!c||c.children.length>0)return;
   CH.forEach(m=>{
-    if(m.role==='user'&&typeof m.content==='string')addMsg('user',m.content);
-    else if(m.role==='assistant'){const t=Array.isArray(m.content)?m.content.filter(b=>b.type==='text').map(b=>b.text).join('\n'):m.content;if(t)addMsg('ai',t);}
+    if(m.role==='user'){
+      if(typeof m.content==='string')addMsg('user',m.content);
+      else if(Array.isArray(m.content)&&m.content.some(b=>b.type==='text'))addMsg('user',m.content);
+    } else if(m.role==='assistant'){const t=Array.isArray(m.content)?m.content.filter(b=>b.type==='text').map(b=>b.text).join('\n'):m.content;if(t)addMsg('ai',t);}
   });
   if(c.children.length===0)addMsg('ai',`Ready to work. What's the goal today, ${S.name||'Bryce'}?`);
   scrollChat();renderChips();
 }
-
 function renderChips(){
   const c=document.getElementById('coach-chips');if(!c)return;
   const map={train:['Build me a program','Push day workout','How to increase my bench?','Deload week?','PPL split'],
@@ -1498,7 +1508,6 @@ function renderChips(){
     recovery:['I feel beat up','Sleep optimization','Mobility routine','Am I overtrained?']};
   c.innerHTML=(map[S.mode||'train']||map.train).map(t=>`<button class="chip" onclick="document.getElementById('coach-input').value='${t}';sendMsg();">${t}</button>`).join('');
 }
-
 function renderCheckin(){
   const b=document.getElementById('b-checkin');if(!b)return;
   const metrics=[{k:'energy',l:'Energy',lo:'Drained',hi:'Energized'},{k:'sleep',l:'Sleep Quality',lo:'Poor',hi:'Great'},{k:'soreness',l:'Soreness',lo:'None',hi:'Wrecked'},{k:'mood',l:'Mood',lo:'Low',hi:'Great'}];
@@ -1559,12 +1568,13 @@ function renderLogDetail(s){
   const exHTML=exs.map(ex=>{
     const doneSets=ex.sets.filter(s=>s?.done);
     if(!doneSets.length)return'';
+    const isCardioLog=!!(ex.cardio);
     const rows=doneSets.map((st,i)=>`
       <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
         <div style="width:28px;height:28px;border-radius:7px;background:rgba(48,209,88,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--green);flex-shrink:0;">${i+1}</div>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.w} <span style="font-size:11px;color:var(--text2);font-weight:400;">lbs</span></div>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.r} <span style="font-size:11px;color:var(--text2);font-weight:400;">reps</span></div>
-        <div style="width:60px;text-align:right;font-size:11px;color:var(--text3);">${st.w&&st.r?Math.round(st.w*(1+st.r/30))+' e1RM':''}</div>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.w} <span style="font-size:11px;color:var(--text2);font-weight:400;">${isCardioLog?'mi':'lbs'}</span></div>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.r} <span style="font-size:11px;color:var(--text2);font-weight:400;">${isCardioLog?'min':'reps'}</span></div>
+        <div style="width:60px;text-align:right;font-size:11px;color:var(--text3);">${!isCardioLog&&st.w&&st.r?Math.round(st.w*(1+st.r/30))+' e1RM':''}</div>
       </div>`).join('');
     // Best set for this exercise
     const best=doneSets.reduce((b,s)=>(!b||s.w>b.w)?s:b,null);
@@ -1575,9 +1585,9 @@ function renderLogDetail(s){
       <div class="card" style="padding:0 14px;">
         <div style="display:flex;padding:7px 0;border-bottom:1px solid var(--border);">
           <div style="width:28px;flex-shrink:0;"></div>
-          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Weight</div>
-          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Reps</div>
-          <div style="width:60px;text-align:right;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Est 1RM</div>
+          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'Miles':'Weight'}</div>
+          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'Duration':'Reps'}</div>
+          <div style="width:60px;text-align:right;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'':'Est 1RM'}</div>
         </div>
         ${rows}
       </div>
@@ -1585,7 +1595,6 @@ function renderLogDetail(s){
   }).join('');
   b.innerHTML=summary+`<div style="padding-bottom:20px;">${exHTML}</div>`;
 }
-
 // ─── WATER TRACKING ────────────────────────────────────────────────────
 function getTodayWaterOz(){
   const t=new Date().toLocaleDateString();
@@ -1605,7 +1614,6 @@ function resetWater(){
   const t=new Date().toLocaleDateString();
   S.water={date:t,oz:0};save();renderToday();
 }
-
 // ─── NUTRITION / MEALS ─────────────────────────────────────────────────
 function getTodayMacros(){
   const t=new Date().toLocaleDateString();
@@ -1698,7 +1706,6 @@ function saveMacroGoals(){
   S.macroGoals={cals:gv('g-cals',2500),protein:gv('g-prot',180),carbs:gv('g-carbs',300),fat:gv('g-fat',80)};
   save();pop();renderNutrition();toast('Goals updated');
 }
-
 // ─── FOOD SEARCH & BARCODE ─────────────────────────────────────────────
 let _foodResults=[],_searchSeq=0;
 // Built-in staples (per 100g, USDA-style). These match instantly and rank
@@ -1752,7 +1759,6 @@ CF('Whey protein powder',400,80,10,7,'30 g (1 scoop)','shake protein'),
 CF('Black beans, cooked',132,8.9,24,0.5,'172 g (1 cup)','beans'),
 CF('Chickpeas, cooked',164,8.9,27,2.6,'164 g (1 cup)','garbanzo beans'),
 CF('Honey',304,0.3,82,0,'21 g (1 tbsp)','')];
-
 // Fast-food pack: published per-item macros, stored per-100g; serving_size
 // carries the item's real weight so the portion prompt prefills it.
 const FF=(n,brand,tags,kc,p,c,f,sv)=>({product_name:n,brands:brand,serving_size:sv,tags:tags,nutriments:{'energy-kcal_100g':kc,'proteins_100g':p,'carbohydrates_100g':c,'fat_100g':f}});
@@ -1934,7 +1940,6 @@ function logManualMeal(){
   addMealEntry({name,cals:parseInt(document.getElementById('ml-cals')?.value)||0,protein:parseFloat(document.getElementById('ml-prot')?.value)||0,carbs:parseFloat(document.getElementById('ml-carbs')?.value)||0,fat:parseFloat(document.getElementById('ml-fat')?.value)||0});
   pop();toast('✓ Logged');
 }
-
 // ─── BARCODE SCANNER ──────────────────────────────────────────────────
 let _scanStream=null,_scanActive=false;
 async function startBarcodeScanner(){
@@ -1962,7 +1967,6 @@ function stopBarcodeScanner(){
   const overlay=document.getElementById('scanner-overlay');
   if(overlay)overlay.style.display='none';
 }
-
 // ─── BODY MEASUREMENTS ─────────────────────────────────────────────────
 function openMeasurementForm(){
   const last=(S.measurements||[]).slice(0,1)[0]||{};
@@ -2013,7 +2017,6 @@ function renderMeasurements(){
       <div class="card">${histRows}</div>
     </div>`;
 }
-
 // ─── ICON GENERATOR — pixel art character (waist-up) + "BIG LIFTS"
 function genIcon(size){
   const c=document.createElement('canvas');c.width=size;c.height=size;
@@ -2045,7 +2048,6 @@ function genIcon(size){
   }
   return c.toDataURL('image/png');
 }
-
 // PWA SETUP
 function setupPWA(){
   try{
@@ -2065,7 +2067,6 @@ function setupPWA(){
     ml.href=URL.createObjectURL(blob);
   }catch(e){}
 }
-
 // INIT
 IDB.open().catch(()=>{});
 // Ask the browser to keep our data — prevents auto-eviction after periods of
