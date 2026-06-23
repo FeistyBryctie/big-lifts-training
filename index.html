@@ -525,7 +525,7 @@ function startProgramDay(i){
   if(AW&&!confirm('A workout is in progress. Discard it and start a new one?'))return;
   const DN=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   AW={id:'p_'+i+'_'+Date.now(),name:(S.program.name||'Program')+' — '+(d.focus||DN[i]),
-      exs:d.exercises.map(e=>({...e,cardio:e.cardio||e.type==='cardio'||d.type==='cardio',plan:+e.sets||3,sets:[]})),t0:Date.now(),progDay:i};
+      exs:d.exercises.map(e=>({...e,plan:+e.sets||3,sets:[]})),t0:Date.now(),progDay:i};
   ensureAudio();persistAW();push('workout');renderWorkout();startWoTimer();
 }
 function startWoTimer(){
@@ -542,19 +542,39 @@ function completeSet(ei,si){
   if(!AW)return;
   ensureAudio();
   const ex=AW.exs[ei];
-  const isCardio=!!(ex.cardio||ex.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(ex.name));
-  const wRaw=String(document.getElementById('w_'+ei+'_'+si)?.value??'');
-  const r=parseFloat(document.getElementById('r_'+ei+'_'+si)?.value)||0;
+  const exType=getExType(ex);
+  const wEl=document.getElementById('w_'+ei+'_'+si);
+  const rEl=document.getElementById('r_'+ei+'_'+si);
+  const wRaw=String(wEl?.value??'');
   const w=wRaw.trim()===''?NaN:parseFloat(wRaw);
-  if(isNaN(w)||(!isCardio&&w<0)||(isCardio&&w<=0)||!r){toast(isCardio?'Enter distance (miles) and duration (min)':'Enter weight (0 for bodyweight) and reps');return;}
+  if(exType==='ddpy'){
+    if(isNaN(w)||w<=0){toast('Enter duration (min)');return;}
+    const intensity=rEl?.value||'medium';
+    AW.exs[ei].sets[si]={w,r:intensity,routine:ex.routine||'',done:true};
+    save();persistAW();renderWorkout();
+    if(navigator.vibrate)try{navigator.vibrate(20);}catch(e){}
+    toast('DDPY session logged – '+w+' min');
+    return;
+  }
+  const r=parseFloat(rEl?.value)||0;
+  if(exType==='strength'){
+    if(isNaN(w)||w<0||!r){toast('Enter weight (0 for bodyweight) and reps');return;}
+    AW.exs[ei].sets[si]={w,r,done:true};
+    const key=ex.name.toLowerCase();
+    let newPR=false;
+    if(w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString()};}
+    save();persistAW();renderWorkout();
+    if(newPR)toast('New PR — '+ex.name+' '+w+' lbs');
+    if(navigator.vibrate)try{navigator.vibrate(20);}catch(e){}
+    const rs=parseRest(ex.rest)||90;startRest(rs);
+    return;
+  }
+  const labels={run:'miles and time (min)',bike:'miles and time (min)',swim:'laps and time (min)',heavybag:'rounds and min per round'};
+  if(isNaN(w)||w<=0||!r){toast('Enter '+(labels[exType]||'distance and time'));return;}
   AW.exs[ei].sets[si]={w,r,done:true};
-  const key=ex.name.toLowerCase();
-  let newPR=false;
-  if(!isCardio&&w>0&&(!S.prs[key]||w>S.prs[key].weight)){newPR=!!S.prs[key];S.prs[key]={name:ex.name,weight:w,reps:r,date:new Date().toLocaleDateString()};}
   save();persistAW();renderWorkout();
-  if(newPR)toast('New PR — '+ex.name+' '+w+' lbs');
   if(navigator.vibrate)try{navigator.vibrate(20);}catch(e){}
-  const rs=parseRest(ex.rest)||90;startRest(rs);
+  if(exType==='heavybag'){const rs=parseRest(ex.rest)||60;startRest(rs);}
 }
 function parseRest(s){if(!s)return 0;const p=String(s).split(':');return p.length===2?+p[0]*60+ +p[1]:+p[0]||0;}
 function startRest(s){
@@ -589,7 +609,7 @@ function finishWorkout(){
   clearInterval(woTick);clearInterval(restTick);skipRest();
   const dur=Math.floor((Date.now()-AW.t0)/1000);
   const wType=AW.progDay!=null?(S.program?.week?.[AW.progDay]?.type||'workout'):'workout';
-  const exDetail=AW.exs.map(e=>({name:e.name,sets:e.sets.filter(s=>s?.done),cardio:!!(e.cardio||e.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(e.name))}));
+  const exDetail=AW.exs.map(e=>({name:e.name,type:getExType(e),sets:e.sets.filter(s=>s?.done),routine:e.routine||''}));
   S.log.unshift({id:AW.id,name:AW.name,type:wType,date:new Date().toLocaleDateString(),dur,sets,exercises:exDetail,ts:Date.now()});
   if(S.log.length>300)S.log=S.log.slice(0,300);
   checkStreak();awardXP(sets*5+10);
@@ -638,6 +658,15 @@ const TOOLS=[
   {name:'log_pr',description:'Log a personal record.',
    input_schema:{type:'object',required:['exercise','weight'],properties:{
      exercise:{type:'string'},weight:{type:'number'},reps:{type:'integer'}
+   }}},
+  {name:'log_food',description:'Log a meal or food to the nutrition tracker. Use when athlete tells you what they ate or asks you to log food for them. Always confirm macros before logging.',
+   input_schema:{type:'object',required:['name','cals','protein','carbs','fat'],properties:{
+     name:{type:'string',description:'Food or meal name'},
+     cals:{type:'number',description:'Calories'},
+     protein:{type:'number',description:'Protein in grams'},
+     carbs:{type:'number',description:'Carbs in grams'},
+     fat:{type:'number',description:'Fat in grams'},
+     grams:{type:'number',description:'Serving size in grams (optional)'}
    }}}
 ];
 function runTool(name,input){
@@ -647,9 +676,12 @@ function runTool(name,input){
   }
   if(name==='save_workout'){saveWorkout(input.name,input.exercises||[]);renderTrain();return`Workout "${input.name}" saved.`;}
   if(name==='log_pr'){const k=input.exercise.toLowerCase();S.prs[k]={name:input.exercise,weight:input.weight,reps:input.reps||1,date:new Date().toLocaleDateString()};save();renderStats();return`PR: ${input.exercise} ${input.weight}lbs`;}
+  if(name==='log_food'){addMealEntry({name:input.name,cals:Math.round(input.cals)||0,protein:Math.round((input.protein||0)*10)/10,carbs:Math.round((input.carbs||0)*10)/10,fat:Math.round((input.fat||0)*10)/10,grams:input.grams||null});save();if(document.getElementById('b-nutrition'))renderNutrition();return`Logged: ${input.name} — ${Math.round(input.cals)} cal · ${input.protein}g P · ${input.carbs}g C · ${input.fat}g F`;}
   return'ok';
 }
 function getSys(){
+  const now=new Date();
+  const dateCtx=`Current date/time: ${now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} at ${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}.`;
   const prs=Object.values(S.prs).slice(0,10).map(p=>`${p.name}:${p.weight}lbs×${p.reps||1}`).join(', ')||'none';
   const ci=S.checkins[0];
   const ciStr=ci?`Energy ${ci.energy}/5, Sleep ${ci.sleep}/5, Soreness ${ci.soreness}/5 (5=most sore), Mood ${ci.mood}/5 (${ci.date}). Scale 1=low,5=high.${ci.notes?` Athlete notes: "${ci.notes}"`:''}`:'no recent check-in';
@@ -661,7 +693,7 @@ function getSys(){
   const nutCtx=todayMacros.cals>0?`Today so far: ${todayMacros.cals}cal / ${todayMacros.protein}g protein / ${todayMacros.carbs}g carbs / ${todayMacros.fat}g fat. Goals: ${goals.cals}cal / ${goals.protein}g P / ${goals.carbs}g C / ${goals.fat}g F.`:'No meals logged today.';
   const waterCtx=todayWater>0?`Water today: ${todayWater}oz of ${S.waterGoal||64}oz goal.`:'No water logged today.';
   const wtCtx=recentWt.length?`Recent weights: ${recentWt.join(', ')}.`:'';
-  const athleteCtx=`Athlete: ${S.name||'Bryce'} | App Level ${S.level} | ${curStreak()}-day training streak | Total sessions: ${S.log.length} | PRs: ${prs} | Check-in: ${ciStr} | ${prog} | ${wtCtx}`;
+  const athleteCtx=`${dateCtx} Athlete: ${S.name||'Bryce'} | App Level ${S.level} | ${curStreak()}-day training streak | Total sessions: ${S.log.length} | PRs: ${prs} | Check-in: ${ciStr} | ${prog} | ${wtCtx}`;
   const knowledgeBase=`
 TRAINING SCIENCE:
 - Progressive overload: increase weight 5lbs upper/10lbs lower when hitting top of rep range
@@ -723,7 +755,7 @@ Always give specific numbers. Never say "adjust based on tolerance" without firs
   const base=`You are an elite strength and nutrition coach — the most knowledgeable, direct coach alive. You combine the programming precision of a powerlifting coach, the nutrition science of a sports dietitian, and the mentality of the hardest trainer in the gym. Zero fluff. Real numbers. Evidence-based.\n\n${knowledgeBase}\n\nATHLETE DATA: ${athleteCtx}\nNUTRITION TODAY: ${nutCtx}\nHYDRATION TODAY: ${waterCtx}`;
   if(S.mode==='nutrition')return base+'\n\nCurrent focus: NUTRITION. Lead with macros, meal structure, food choices, and supplement timing. Use the athlete\'s logged food data to give personalized feedback. Give meal plans with exact grams, not vague portions.';
   if(S.mode==='recovery')return base+'\n\nCurrent focus: RECOVERY. Assess the check-in scores. Address sleep, soreness, mobility, and deload needs. Give specific recovery protocols.';
-  return base+'\n\nCurrent focus: TRAINING. When asked for a full week program, use save_program tool. For single workouts, use save_workout tool. Include rest times and coaching cues per exercise. Reference the athlete\'s PRs to set appropriate working weights.';
+  return base+'\n\nCurrent focus: TRAINING. When asked for a full week program, use save_program tool. For single workouts, use save_workout tool. Include rest times and coaching cues per exercise. Reference the athlete\'s PRs to set appropriate working weights. You also have a log_food tool — use it whenever the athlete mentions what they ate or asks you to log food. Always estimate macros from context and confirm before logging.';
 }
 // Returns a slice of CH that is always valid for the API: starts on a real
 // user text turn (never an orphaned tool_result) and never ends on an
@@ -902,20 +934,59 @@ function openNewWorkoutModal(){
   document.getElementById('wm-rows').innerHTML='';
   addExRow();openM('m-workout');
 }
+function getExType(ex){
+  const t=ex.type||'';
+  if(['run','bike','swim','heavybag','ddpy'].includes(t))return t;
+  if(ex.cardio||t==='cardio'){
+    if(/(run|jog|treadmill)/i.test(ex.name))return 'run';
+    if(/swim/i.test(ex.name))return 'swim';
+    if(/(bag|boxing|muay)/i.test(ex.name))return 'heavybag';
+    if(/(ddpy|ddp)/i.test(ex.name))return 'ddpy';
+    return 'bike';
+  }
+  if(/(^run|running|jog)/i.test(ex.name))return 'run';
+  if(/(bike|cycl|ride|spin)/i.test(ex.name))return 'bike';
+  if(/swim/i.test(ex.name))return 'swim';
+  if(/(heavy.?bag|bag work|boxing|muay)/i.test(ex.name))return 'heavybag';
+  if(/(ddpy|ddp.?yoga)/i.test(ex.name))return 'ddpy';
+  if(/(treadmill|elliptical|row|walk)/i.test(ex.name))return 'run';
+  return 'strength';
+}
 function addExRow(){
   const c=document.getElementById('wm-rows'),r=document.createElement('div');
-  r.style.cssText='display:flex;gap:6px;margin-bottom:8px;align-items:center;';
-  r.innerHTML=`<input class="input" placeholder="Exercise" style="flex:2;padding:10px 12px;font-size:14px;">
-    <input class="input" type="number" placeholder="3" style="width:48px;padding:10px 8px;font-size:14px;text-align:center;">
-    <input class="input" placeholder="8-10" style="flex:1;padding:10px 8px;font-size:14px;text-align:center;">
-    <button type="button" title="Cardio (distance/time)" onclick="const on=this.parentElement.dataset.cardio!=='1';this.parentElement.dataset.cardio=on?'1':'0';this.style.background=on?'rgba(255,214,10,.2)':'var(--s3)';this.style.color=on?'var(--yellow)':'var(--text2)';" style="width:44px;height:36px;border-radius:7px;background:var(--s3);border:none;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.3px;flex-shrink:0;">Cardio</button>
-    <button onclick="this.parentElement.remove()" style="width:30px;border-radius:7px;background:var(--s3);border:none;color:var(--text2);cursor:pointer;font-size:18px;flex-shrink:0;">×</button>`;
+  r.style.cssText='margin-bottom:12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;';
+  r.dataset.exType='strength';
+  const types=[['Strength','strength'],['Run','run'],['Bike','bike'],['Swim','swim'],['Heavy Bag','heavybag'],['DDPY','ddpy']];
+  const typeBtns=types.map(([label,id],i)=>`<button type="button" class="ex-type-btn" data-t="${id}" onclick="changeExType(this.closest('[data-ex-type]'),'${id}')" style="padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap;border:1px solid ${i===0?'transparent':'var(--border)'};cursor:pointer;flex-shrink:0;background:${i===0?'var(--green)':'var(--s3)'};color:${i===0?'#000':'var(--text2)'};">${label}</button>`).join('');
+  r.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;"><input class="input ex-name" placeholder="Exercise name" style="flex:1;padding:10px 12px;font-size:14px;"><button onclick="this.closest('[data-ex-type]').remove()" style="width:32px;height:36px;border-radius:7px;background:var(--s3);border:none;color:var(--text2);cursor:pointer;font-size:18px;flex-shrink:0;">\xd7</button></div><div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">${typeBtns}</div><div class="ex-fields" style="display:flex;gap:6px;align-items:center;"><input class="input" type="number" placeholder="Sets" value="3" style="width:56px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);">\xd7</span><input class="input" placeholder="Reps" value="8-10" style="flex:1;padding:8px;font-size:14px;text-align:center;"></div>`;
+  r.setAttribute('data-ex-type','strength');
   c.appendChild(r);
+}
+function changeExType(row,type){
+  row.dataset.exType=type;
+  row.querySelectorAll('.ex-type-btn').forEach(b=>{
+    const active=b.dataset.t===type;
+    b.style.background=active?'var(--green)':'var(--s3)';
+    b.style.color=active?'#000':'var(--text2)';
+    b.style.borderColor=active?'transparent':'var(--border)';
+  });
+  const fields=row.querySelector('.ex-fields');
+  if(!fields)return;
+  const fm={
+    strength:'<input class="input" type="number" placeholder="Sets" value="3" style="width:56px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);">\xd7</span><input class="input" placeholder="Reps" value="8-10" style="flex:1;padding:8px;font-size:14px;text-align:center;">',
+    run:'<input class="input" type="number" placeholder="Intervals" value="1" style="width:64px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);white-space:nowrap;flex-shrink:0;padding-left:4px;">interval(s) \xb7 mi + min</span>',
+    bike:'<input class="input" type="number" placeholder="Sets" value="1" style="width:64px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);white-space:nowrap;flex-shrink:0;padding-left:4px;">set(s) \xb7 mi + min</span>',
+    swim:'<input class="input" type="number" placeholder="Sets" value="1" style="width:64px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);white-space:nowrap;flex-shrink:0;padding-left:4px;">set(s) \xb7 laps + min</span>',
+    heavybag:'<input class="input" type="number" placeholder="Rounds" value="3" style="width:56px;padding:8px;font-size:14px;text-align:center;"><span style="font-size:12px;color:var(--text3);">\xd7</span><input class="input" placeholder="min/round" value="3" style="flex:1;padding:8px;font-size:14px;text-align:center;">',
+    ddpy:'<select class="input ex-ddpy-routine" style="flex:1;padding:8px;font-size:14px;"><option>Energy</option><option>Fat Burner</option><option>Below the Belt</option><option>Diamond Dozen</option><option>Wake Up</option><option>Beginner</option><option>Old School</option><option>Power</option><option>Arthur</option><option>Red Hot Core</option></select>'
+  };
+  fields.style.cssText='display:flex;gap:6px;align-items:center;';
+  fields.innerHTML=fm[type]||fm.strength;
 }
 function saveWM(){
   const name=document.getElementById('wm-name')?.value?.trim();if(!name){toast('Enter a name');return;}
   const rows=document.querySelectorAll('#wm-rows>div');
-  const exs=[];rows.forEach(r=>{const inp=r.querySelectorAll('input');const n=inp[0]?.value?.trim();if(n)exs.push({name:n,sets:+inp[1]?.value||3,reps:inp[2]?.value||'8-10',rest:'',note:'',cardio:r.dataset.cardio==='1'}); });
+  const exs=[];rows.forEach(r=>{const type=r.dataset.exType||'strength';const name=r.querySelector('.ex-name')?.value?.trim();if(!name)return;const fields=r.querySelector('.ex-fields');const fi=fields?fields.querySelectorAll('input,select'):[];if(type==='strength')exs.push({name,type:'strength',sets:+fi[0]?.value||3,reps:fi[1]?.value||'8-10',rest:'',note:''});else if(type==='heavybag')exs.push({name,type:'heavybag',sets:+fi[0]?.value||3,reps:fi[1]?.value||'3',rest:'',note:''});else if(type==='ddpy')exs.push({name,type:'ddpy',sets:1,reps:'',rest:'',note:'',routine:fi[0]?.value||'Energy'});else exs.push({name,type,sets:+fi[0]?.value||1,reps:'',rest:'',note:''}); });
   if(!exs.length){toast('Add exercises');return;}
   saveWorkout(name,exs);closeM('m-workout');renderTrain();toast('Workout saved');
 }
@@ -1343,30 +1414,52 @@ function toggleDay(i){document.getElementById('dr'+i)?.classList.toggle('open');
 function renderWorkout(){
   const b=document.getElementById('b-workout'),n=document.getElementById('wo-name');if(!b||!AW)return;
   if(n)n.textContent=AW.name;
-  const keep={};b.querySelectorAll('input.set-input').forEach(i=>{if(i.value&&!i.readOnly)keep[i.id]=i.value;});
+  const keep={};b.querySelectorAll('input.set-input,select.set-input').forEach(i=>{if(i.value&&!i.readOnly)keep[i.id]=i.value;});
   b.innerHTML=AW.exs.map((ex,ei)=>{
-    const pr=S.prs[ex.name.toLowerCase()];
-    const ns=Math.max(+ex.plan||3,ex.sets.length);
-    const isCardio=!!(ex.cardio||ex.type==='cardio'||/\b(treadmill|elliptical|stairmaster|stair climber|jog|jogging|run|running|sprints?|cycling|bike|rower|rowing machine|swim|swimming|jump rope|jumping rope)\b/i.test(ex.name));
+    const exType=getExType(ex);
+    const pr=exType==='strength'?S.prs[ex.name.toLowerCase()]:null;
+    const ns=Math.max(+ex.plan||(exType==='ddpy'?1:3),ex.sets.length);
+    const cfg={
+      strength:{h1:'Weight',h2:'Reps',sep:'\xd7',p1:pr?pr.weight:'lbs',p2:esc(ex.reps||'reps'),badge:''},
+      run:{h1:'Miles',h2:'Min',sep:'@',p1:'mi',p2:'min',badge:'RUN'},
+      bike:{h1:'Miles',h2:'Min',sep:'@',p1:'mi',p2:'min',badge:'BIKE'},
+      swim:{h1:'Laps',h2:'Min',sep:'@',p1:'laps',p2:'min',badge:'SWIM'},
+      heavybag:{h1:'Rounds',h2:'Min/Rd',sep:'\xd7',p1:'rounds',p2:'min',badge:'HEAVY BAG'},
+      ddpy:{h1:'Duration',h2:'Intensity',sep:'\xb7',p1:'min',p2:'',badge:'DDPY'}
+    }[exType]||{h1:'Weight',h2:'Reps',sep:'\xd7',p1:'lbs',p2:'reps',badge:''};
+    const badgeHTML=cfg.badge?` <span style="font-size:10px;background:var(--s3);color:var(--text2);padding:2px 7px;border-radius:5px;font-weight:700;margin-left:6px;vertical-align:middle;letter-spacing:.3px;">${cfg.badge}</span>`:'';
     const rows=Array.from({length:ns},(_,si)=>{
       const done=AW.exs[ei].sets[si]?.done;
-      return`<div class="set-row"><div class="set-num ${done?'done':''}">${done?'✓':si+1}</div>
-        <input class="set-input" id="w_${ei}_${si}" type="number" inputmode="decimal" placeholder="${isCardio?'miles':(pr?pr.weight:'lbs')}" ${done?`value="${AW.exs[ei].sets[si].w}" readonly`:''}>
-        <span style="font-size:12px;color:var(--text3);">${isCardio?'@':'×'}</span>
-        <input class="set-input" id="r_${ei}_${si}" type="number" inputmode="decimal" placeholder="${isCardio?'min':esc(ex.reps||'reps')}" ${done?`value="${AW.exs[ei].sets[si].r}" readonly`:''}>
+      const sd=AW.exs[ei].sets[si];
+      if(exType==='ddpy'){
+        const routineLabel=done?(sd.routine||ex.routine||''):(ex.routine||'');
+        return`<div class="set-row"><div class="set-num ${done?'done':''}">${done?'✓':si+1}</div>
+          <input class="set-input" id="w_${ei}_${si}" type="number" inputmode="decimal" placeholder="min" ${done?`value="${sd.w}" readonly`:''} style="flex:1;">
+          ${done?`<span style="flex:1;text-align:center;font-size:13px;color:var(--text2);font-weight:500;">${sd.r||'medium'}${routineLabel?' \xb7 '+routineLabel:''}</span>`:`<select class="set-input" id="r_${ei}_${si}" style="flex:1;padding:6px 4px;font-size:13px;"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>`}
+          ${done?'<span class="set-btn done" style="cursor:default;">✓</span>':`<button class="set-btn" onclick="completeSet(${ei},${si})">Done</button>`}
+        </div>`;
+      }
+      let paceStr='';
+      if(done&&exType==='run'&&sd?.w&&sd?.r){const pm=Math.floor(sd.r/sd.w),ps=Math.round((sd.r/sd.w-pm)*60);paceStr=`<div style="font-size:11px;color:var(--text3);text-align:right;padding-right:4px;margin-top:-2px;">${pm}:${ps.toString().padStart(2,'0')}/mi</div>`;}
+      return`<div><div class="set-row"><div class="set-num ${done?'done':''}">${done?'✓':si+1}</div>
+        <input class="set-input" id="w_${ei}_${si}" type="number" inputmode="decimal" placeholder="${cfg.p1}" ${done?`value="${sd?.w}" readonly`:''}>
+        <span style="font-size:12px;color:var(--text3);">${cfg.sep}</span>
+        <input class="set-input" id="r_${ei}_${si}" type="number" inputmode="decimal" placeholder="${cfg.p2}" ${done?`value="${sd?.r}" readonly`:''}>
         ${done?'<span class="set-btn done" style="cursor:default;">✓</span>':`<button class="set-btn" onclick="completeSet(${ei},${si})">Done</button>`}
-      </div>`;
+      </div>${paceStr}</div>`;
     }).join('');
+    const routineNote=exType==='ddpy'&&ex.routine?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">${esc(ex.routine)}</div>`:'';
+    const addSetBtn=exType==='ddpy'?'':`<button onclick="addSetRow(${ei})" style="margin-top:4px;background:none;border:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;padding:6px 0;">+ Add set</button>`;
     return`<div style="padding:14px 20px;border-bottom:1px solid var(--border);">
-      <div style="margin-bottom:10px;"><div style="font-size:16px;font-weight:600;">${esc(ex.name)}${isCardio?' <span style="font-size:11px;background:rgba(255,214,10,.15);color:var(--yellow);padding:2px 7px;border-radius:5px;font-weight:600;margin-left:6px;vertical-align:middle;">CARDIO</span>':''}</div>
-      ${!isCardio&&pr?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">PR: ${pr.weight} lbs × ${pr.reps}</div>`:''}
+      <div style="margin-bottom:10px;"><div style="font-size:16px;font-weight:600;">${esc(ex.name)}${badgeHTML}</div>
+      ${routineNote}
+      ${pr?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">PR: ${pr.weight} lbs \xd7 ${pr.reps}</div>`:''}
       ${ex.note?`<div style="font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4;">${esc(ex.note)}</div>`:''}
       ${ex.rest?`<div style="font-size:12px;color:var(--text3);margin-top:2px;">Rest: ${esc(ex.rest)}</div>`:''}</div>
       <div style="display:flex;gap:8px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding-bottom:4px;">
-        <div style="width:28px;text-align:center;">Set</div><div style="flex:1;text-align:center;">${isCardio?'Miles':'Weight'}</div>
-        <div style="width:16px;"></div><div style="flex:1;text-align:center;">${isCardio?'Min':'Reps'}</div><div style="width:60px;"></div>
-      </div>${rows}
-      <button onclick="addSetRow(${ei})" style="margin-top:4px;background:none;border:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;padding:6px 0;">+ Add set</button></div>`;
+        <div style="width:28px;text-align:center;">Set</div><div style="flex:1;text-align:center;">${cfg.h1}</div>
+        <div style="width:16px;"></div><div style="flex:1;text-align:center;">${cfg.h2}</div><div style="width:60px;"></div>
+      </div>${rows}${addSetBtn}</div>`;
   }).join('');
   Object.entries(keep).forEach(([id,v])=>{const el=document.getElementById(id);if(el&&!el.readOnly&&!el.value)el.value=v;});
 }
@@ -1385,6 +1478,18 @@ function renderStats(){
     .map(([t,n])=>`<div class="type-bar"><span class="badge ${TC[t]||'b-rest'}">${t.toUpperCase()}</span><span style="font-size:15px;font-weight:600;">${n}</span></div>`).join('');
   // Body weight from check-ins
   const wts=S.checkins.filter(c=>c.weight).slice(0,30).reverse();
+  const ciJournalHTML=S.checkins.length?S.checkins.map(ci=>{
+    const scores=[{l:'Energy',v:ci.energy,c:'var(--green)'},{l:'Sleep',v:ci.sleep,c:'#64b5f6'},{l:'Soreness',v:ci.soreness,c:'#ff7043'},{l:'Mood',v:ci.mood,c:'#ffd700'}];
+    const dots=scores.map(s=>`<div style="flex:1;"><div style="font-size:9px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;">${s.l}</div><div style="display:flex;gap:2px;">${Array.from({length:5},(_,i)=>`<div style="width:9px;height:9px;border-radius:2px;background:${i<(s.v||0)?s.c:'var(--s3)'}"></div>`).join('')}</div></div>`).join('');
+    return`<div style="padding:13px 14px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;">
+        <div style="font-size:13px;font-weight:600;">${ci.date}</div>
+        ${ci.weight?`<div style="font-size:13px;font-weight:600;color:var(--text2);">${ci.weight} lbs</div>`:''}
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:${ci.notes?'8':'0'}px;">${dots}</div>
+      ${ci.notes?`<div style="font-size:12px;color:var(--text2);line-height:1.4;margin-top:4px;font-style:italic;">"${esc(ci.notes)}"</div>`:''}
+    </div>`;
+  }).join(''):`<div style="padding:20px;text-align:center;font-size:13px;color:var(--text2);">No check-ins recorded yet</div>`;
   const wtSection=wts.length>=2?`<div class="section" style="margin-top:20px;">
     <div class="sec-header"><div class="sec-title">Body Weight</div><div style="font-size:12px;color:var(--text3);">${wts[0].weight} → ${wts[wts.length-1].weight} lbs</div></div>
     <div class="card" style="padding:14px 16px;">
@@ -1407,7 +1512,11 @@ function renderStats(){
     ${typeRows?`<div class="section" style="margin-top:20px;"><div class="sec-header"><div class="sec-title">By Type</div></div><div class="card" style="padding:0 14px;">${typeRows}</div></div>`:''}
     ${wtSection}
     <div class="section" style="margin-top:20px;margin-bottom:4px;"><div class="sec-header"><div class="sec-title">Personal Records</div><button class="sec-action" onclick="openPRModal()">+ Add</button></div>
-    <div class="card">${prHTML}</div></div>`;
+    <div class="card">${prHTML}</div></div>
+    <div class="section" style="margin-top:20px;margin-bottom:20px;">
+      <div class="sec-header"><div class="sec-title">Check-in Journal</div><div style="font-size:12px;color:var(--text3);">${S.checkins.length} entries</div></div>
+      <div class="card" style="padding:0;">${ciJournalHTML}</div>
+    </div>`;
   if(wts.length>=2)drawWtChart(document.getElementById('wt-canvas'),wts);
 }
 function drawWtChart(canvas,data){
@@ -1568,26 +1677,44 @@ function renderLogDetail(s){
   const exHTML=exs.map(ex=>{
     const doneSets=ex.sets.filter(s=>s?.done);
     if(!doneSets.length)return'';
-    const isCardioLog=!!(ex.cardio);
-    const rows=doneSets.map((st,i)=>`
-      <div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+    const exType=ex.type||'strength';
+    const isDDPY=exType==='ddpy';
+    const isRun=exType==='run';
+    const isStr=exType==='strength';
+    const u1=exType==='swim'?'laps':isStr?'lbs':'mi';
+    const u2=isStr?'reps':'min';
+    const h1=isDDPY?'Duration':exType==='swim'?'Laps':isStr?'Weight':'Miles';
+    const h2=isDDPY?'Intensity':isStr?'Reps':'Min';
+    const h3=isDDPY?'Routine':isStr?'Est 1RM':isRun?'Pace':'';
+    const rows=doneSets.map((st,i)=>{
+      if(isDDPY){return`<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:8px;">
         <div style="width:28px;height:28px;border-radius:7px;background:rgba(48,209,88,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--green);flex-shrink:0;">${i+1}</div>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.w} <span style="font-size:11px;color:var(--text2);font-weight:400;">${isCardioLog?'mi':'lbs'}</span></div>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.r} <span style="font-size:11px;color:var(--text2);font-weight:400;">${isCardioLog?'min':'reps'}</span></div>
-        <div style="width:60px;text-align:right;font-size:11px;color:var(--text3);">${!isCardioLog&&st.w&&st.r?Math.round(st.w*(1+st.r/30))+' e1RM':''}</div>
-      </div>`).join('');
-    // Best set for this exercise
-    const best=doneSets.reduce((b,s)=>(!b||s.w>b.w)?s:b,null);
-    const pr=S.prs[ex.name.toLowerCase()];
+        <div style="flex:1;font-size:15px;font-weight:600;">${st.w} <span style="font-size:11px;color:var(--text2);font-weight:400;">min</span></div>
+        <div style="flex:1;text-align:center;font-size:13px;color:var(--text2);text-transform:capitalize;">${st.r||'medium'}</div>
+        <div style="flex:1;text-align:right;font-size:12px;color:var(--text3);">${st.routine||ex.routine||''}</div>
+      </div>`;}
+      let extra='';
+      if(isStr&&st.w&&st.r)extra=Math.round(st.w*(1+st.r/30))+' e1RM';
+      else if(isRun&&st.w&&st.r){const pm=Math.floor(st.r/st.w),ps=Math.round((st.r/st.w-pm)*60);extra=pm+':'+ps.toString().padStart(2,'0')+'/mi';}
+      return`<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <div style="width:28px;height:28px;border-radius:7px;background:rgba(48,209,88,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--green);flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.w} <span style="font-size:11px;color:var(--text2);font-weight:400;">${u1}</span></div>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:600;">${st.r} <span style="font-size:11px;color:var(--text2);font-weight:400;">${u2}</span></div>
+        <div style="width:60px;text-align:right;font-size:11px;color:var(--text3);">${extra}</div>
+      </div>`;
+    }).join('');
+    const best=isStr?doneSets.reduce((b,s)=>(!b||s.w>b.w)?s:b,null):null;
+    const pr=isStr?S.prs[ex.name.toLowerCase()]:null;
     const wasPR=pr&&best&&best.w>=pr.weight?'<span style="font-size:10px;font-weight:700;color:var(--yellow);margin-left:6px;letter-spacing:.3px;">PR</span>':'';
+    const typeTag=!isStr?`<span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--s3);padding:2px 6px;border-radius:4px;margin-left:6px;letter-spacing:.3px;">${exType.toUpperCase()}</span>`:'';
     return`<div class="section" style="margin-top:16px;">
-      <div style="font-size:14px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;">${esc(ex.name)}${wasPR}</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;">${esc(ex.name)}${wasPR}${typeTag}</div>
       <div class="card" style="padding:0 14px;">
         <div style="display:flex;padding:7px 0;border-bottom:1px solid var(--border);">
           <div style="width:28px;flex-shrink:0;"></div>
-          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'Miles':'Weight'}</div>
-          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'Duration':'Reps'}</div>
-          <div style="width:60px;text-align:right;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${isCardioLog?'':'Est 1RM'}</div>
+          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${h1}</div>
+          <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${h2}</div>
+          <div style="width:60px;text-align:right;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">${h3}</div>
         </div>
         ${rows}
       </div>
@@ -1621,24 +1748,6 @@ function getTodayMacros(){
 }
 function getTodayMeals(){
   const t=new Date().toLocaleDateString();return(S.meals||[]).filter(m=>m.date===t);
-}
-// Recent / "My Foods" — distinct foods you've logged before (incl. manual
-// entries), newest first, so repeat items are one tap away regardless of
-// what the food database knows.
-function recentFoods(){
-  const seen=new Set(),out=[];
-  for(const m of (S.meals||[])){
-    const key=(m.name||'').trim().toLowerCase();
-    if(!key||seen.has(key))continue;
-    seen.add(key);out.push(m);
-    if(out.length>=12)break;
-  }
-  return out;
-}
-function logRecent(i){
-  const r=recentFoods()[i];if(!r)return;
-  addMealEntry({name:r.name,grams:r.grams,cals:r.cals||0,protein:r.protein||0,carbs:r.carbs||0,fat:r.fat||0});
-  pop();toast('✓ Added '+r.name);
 }
 function addMealEntry(meal){
   if(!S.meals)S.meals=[];
@@ -1824,71 +1933,9 @@ FF('Cheese Pizza (1 lg slice)','Pizza','dominos pizza hut slice',257,10.5,32.4,9
 FF('Orange Chicken','Panda Express','panda express chinese',304,15.5,31.7,14.3,'161 g (1 serving)'),
 FF('Chow Mein','Panda Express','panda express chinese noodles',194,4.9,30.4,7.6,'263 g (1 serving)'),
 FF('Fried Rice','Panda Express','panda express chinese',202,4.3,33.1,6.2,'257 g (1 serving)')];
-// ── BEVERAGES, ENERGY DRINKS & SUPPLEMENTS ─────────────────────────────
-// Published per-serving macros stored per-100g so they flow through the same
-// portion pipeline; serving_size carries the real serving weight (~1g per ml
-// for drinks) so the portion prompt prefills exactly one serving.
-const BV=(n,brand,tags,g,label,kc,p,c,f)=>({product_name:n,brands:brand,serving_size:g+' g ('+label+')',tags:tags,
-  nutriments:{'energy-kcal_100g':kc*100/g,'proteins_100g':p*100/g,'carbohydrates_100g':c*100/g,'fat_100g':f*100/g}});
-const SUPP_FOODS=[
-// Energy drinks
-BV('Energy Drink','Bloom Nutrition','bloom sparkling energy drink',355,'12 fl oz can',15,0,5,0),
-BV('Greens & Superfoods','Bloom Nutrition','bloom greens superfood powder',6,'1 scoop',30,1,5,0),
-BV('Energy Drink','Celsius','celsius energy drink',355,'12 fl oz can',10,0,2,0),
-BV('Energy Drink','Alani Nu','alani nu energy drink',355,'12 fl oz can',10,0,2,0),
-BV('Energy Drink','Prime','prime energy drink',355,'12 fl oz can',10,0,2,0),
-BV('Fuel Energy Drink','Ryse','ryse fuel energy drink',355,'12 fl oz can',15,0,4,0),
-BV('Energy Drink','Monster','monster energy drink',473,'16 fl oz can',210,0,54,0),
-BV('Zero Ultra Energy','Monster','monster zero ultra energy drink sugar free',473,'16 fl oz can',10,0,3,0),
-BV('Energy Drink','Red Bull','red bull energy drink',250,'8.4 fl oz can',110,1,27,0),
-BV('Sugarfree Energy','Red Bull','red bull sugarfree energy drink',250,'8.4 fl oz can',10,1,3,0),
-BV('Energy Drink','Ghost','ghost energy drink',473,'16 fl oz can',5,0,1,0),
-BV('Energy Drink','C4','c4 cellucor energy drink',473,'16 fl oz can',0,0,0,0),
-BV('Energy Drink','Reign','reign total body fuel energy drink',473,'16 fl oz can',10,0,3,0),
-BV('Energy Drink','Bang','bang energy drink',473,'16 fl oz can',0,0,0,0),
-// Hydration & sports drinks
-BV('Sparkling Water','Liquid Death','liquid death mountain sparkling water',500,'16.9 fl oz can',0,0,0,0),
-BV('Iced Tea','Liquid Death','liquid death iced tea',555,'19.2 fl oz can',20,0,5,0),
-BV('Hydration Drink','Prime','prime hydration drink',500,'16.9 fl oz bottle',20,0,5,0),
-BV('Thirst Quencher','Gatorade','gatorade sports drink',591,'20 fl oz bottle',140,0,36,0),
-BV('Zero Sugar','Gatorade','gatorade zero sugar sports drink',591,'20 fl oz bottle',5,0,1,0),
-BV('Sports Drink','Powerade','powerade sports drink',591,'20 fl oz bottle',150,0,38,0),
-BV('Sports Drink','BODYARMOR','bodyarmor body armor sports drink',473,'16 fl oz bottle',90,0,21,0),
-BV('Hydration Multiplier','Liquid I.V.','liquid iv hydration multiplier electrolyte',16,'1 stick',45,0,11,0),
-BV('Electrolyte Mix','LMNT','lmnt electrolyte hydration',6,'1 packet',10,0,2,0),
-// Protein shakes (ready to drink)
-BV('Protein Milkshake','Nurri','nurri protein milkshake latte shake',330,'330 ml bottle',175,30,8,3),
-BV('Core Power 26g Protein Shake','Fairlife','fairlife core power protein shake',414,'14 fl oz bottle',170,26,8,4.5),
-BV('Core Power Elite 42g Protein Shake','Fairlife','fairlife core power elite protein shake',414,'14 fl oz bottle',230,42,9,3.5),
-BV('Nutrition Plan 30g Protein Shake','Fairlife','fairlife nutrition plan protein shake',325,'11 fl oz bottle',150,30,3,1.5),
-BV('2% Ultra-Filtered Milk','Fairlife','fairlife milk 2 percent ultra filtered',240,'1 cup',120,13,6,4.5),
-BV('Fat Free Milk','Fairlife','fairlife milk fat free skim nonfat',240,'1 cup',80,13,6,0),
-BV('Protein Shake','Premier Protein','premier protein shake',325,'11 fl oz bottle',160,30,5,3),
-BV('Protein Shake','Muscle Milk','muscle milk protein shake',414,'14 fl oz bottle',150,25,9,4.5),
-BV('Plant Protein Shake','OWYN','owyn plant based protein shake',355,'12 fl oz bottle',180,20,12,7),
-// Protein powders
-BV('Loaded Protein','Ryse','ryse loaded protein powder whey',46,'1 scoop',150,25,6,2.5),
-BV('Gold Standard Whey','Optimum Nutrition','optimum nutrition on gold standard whey protein powder',31,'1 scoop',120,24,3,1.5),
-BV('Protein Powder','Quest','quest protein powder whey',31,'1 scoop',100,21,4,1),
-BV('Whey Protein','Ghost','ghost whey protein powder',38,'1 scoop',130,25,4,2.5),
-BV('ISO100 Whey Isolate','Dymatize','dymatize iso100 whey isolate protein powder',32,'1 scoop',120,25,2,0.5),
-// Protein bars
-BV('Protein Bar','Quest','quest protein bar',60,'1 bar',190,21,22,8),
-BV('Protein Bar','RXBAR','rxbar protein bar',52,'1 bar',210,12,24,9),
-BV('Protein Bar','Built Bar','built bar protein bar',49,'1 bar',130,17,18,4),
-BV('Protein Bar','Pure Protein','pure protein bar',50,'1 bar',200,20,17,6),
-// Milk alternatives & coffee
-BV('Unsweetened Almond Milk','Almond Breeze','almond milk unsweetened',240,'1 cup',30,1,1,2.5),
-BV('Oat Milk','Oatly','oat milk oatly',240,'1 cup',120,3,16,5),
-BV('Soy Milk','Silk','soy milk',240,'1 cup',100,7,8,4),
-BV('Black Coffee','Coffee','coffee black brewed',240,'1 cup',2,0.3,0,0),
-// Sodas
-BV('Coca-Cola','Coca-Cola','coke coca cola soda',368,'12 fl oz can',140,0,39,0),
-BV('Diet Coke','Coca-Cola','diet coke soda zero sugar',355,'12 fl oz can',0,0,0,0),
-BV('Sprite','Sprite','sprite lemon lime soda',368,'12 fl oz can',140,0,38,0)];
 // token match with light plural stemming ("eggs" matches "egg")
 function tokHit(txt,t){return txt.includes(t)||(t.endsWith('s')&&txt.includes(t.slice(0,-1)));}
-function matchCommon(toks){return COMMON_FOODS.concat(FAST_FOODS).concat(SUPP_FOODS).filter(f=>{const txt=(f.product_name+' '+(f.brands||'')+' '+f.tags).toLowerCase();return toks.every(t=>tokHit(txt,t));});}
+function matchCommon(toks){return COMMON_FOODS.concat(FAST_FOODS).filter(f=>{const txt=(f.product_name+' '+f.tags).toLowerCase();return toks.every(t=>tokHit(txt,t));});}
 // Normalize API products: kJ→kcal when kcal missing, brands array→string
 function normFood(p){
   const n=p.nutriments||{};
@@ -1918,18 +1965,15 @@ function rankFood(items,ql,toks){
 function renderFoodSearch(){
   const b=document.getElementById('b-food-search');if(!b)return;
   const hasBD='BarcodeDetector' in window;
-  const _rf=recentFoods();
-  const recentHTML=_rf.length?`<div style="padding:14px 16px 6px;"><div class="sec-title">Recent</div></div><div class="card" style="margin:0 16px;">`+_rf.map((m,i)=>`<div class="food-item" onclick="logRecent(${i})"><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;">${esc(m.name)}</div><div class="food-macros">${m.cals||0} cal · ${m.protein||0}g P · ${m.carbs||0}g C · ${m.fat||0}g F${m.grams?' · '+m.grams+'g':''}</div></div><div style="color:var(--text3);padding-left:8px;font-size:20px;line-height:1;">+</div></div>`).join('')+`</div>`:'';
   b.innerHTML=`
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
       <div style="display:flex;gap:8px;">
         <input id="food-q" class="input" placeholder="Search food or brand…" style="flex:1;margin-bottom:0;" onkeydown="if(event.key==='Enter')doFoodSearch()">
-        <button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Scan or enter barcode"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+        ${hasBD?`<button onclick="startBarcodeScanner()" style="background:var(--s2);border:1px solid var(--border);color:var(--yellow);width:42px;height:42px;border-radius:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Scan barcode"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>`:''}
         <button onclick="doFoodSearch()" style="background:var(--text);color:var(--bg);border:none;padding:0 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;height:42px;flex-shrink:0;">Search</button>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">${hasBD?'Tap the barcode icon to scan a product':'No camera scanner on this browser — tap the barcode icon to type a barcode number'}</div>
+      ${!hasBD?'<div style="font-size:11px;color:var(--text3);margin-top:8px;">Barcode scanning available in Chrome/Android</div>':''}
     </div>
-    ${recentHTML}
     <div style="padding:10px 16px 6px;font-size:11px;color:var(--text3);">Powered by Open Food Facts · Per 100g unless noted</div>
     <div id="food-results"></div>
     <!-- Manual log -->
